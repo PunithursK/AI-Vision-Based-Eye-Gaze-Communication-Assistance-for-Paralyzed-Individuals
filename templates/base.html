@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}EyeGaze AI - Communication Assistance{% endblock %}</title>
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+    <!-- Existing custom stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    {% block head %}{% endblock %}
+</head>
+<body class="dark-theme {% block body_class %}{% endblock %}">
+    {% block content %}{% endblock %}
+
+    <!-- Standard In-App Confirmation Dialog Modal (Matches Image 8) -->
+    <div class="modal fade" id="appUniversalModal" tabindex="-1" aria-labelledby="appUniversalModalTitle" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+            <div class="modal-content shadow-lg" style="background: #0a0c10; border: 1px solid #1e222a; border-radius: 16px; color: #ffffff;">
+                <div class="modal-header border-bottom border-secondary border-opacity-25 py-3 px-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i id="appUniversalModalIcon" class="bi bi-question-circle-fill text-primary fs-5"></i>
+                        <h5 class="modal-title fw-bold text-white mb-0" id="appUniversalModalTitle">Confirm Action</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4 px-4" id="appUniversalModalBody" style="color: #cbd5e1; font-size: 14.5px; line-height: 1.6;">
+                    Are you sure you want to proceed?
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25 py-3 px-4 d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-outline-secondary px-3 py-1" id="appUniversalModalCancelBtn" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-danger px-4 py-1 fw-semibold" id="appUniversalModalConfirmBtn">Confirm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dedicated In-App Alert Dialog Modal (Prevents appConfirm corruption) -->
+    <div class="modal fade" id="appAlertModal" tabindex="-1" aria-labelledby="appAlertTitle" aria-hidden="true" data-bs-backdrop="static">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 480px;">
+            <div class="modal-content shadow-lg" style="background: #0a0c10; border: 1px solid #1e222a; border-radius: 16px; color: #ffffff;">
+                <div class="modal-header border-bottom border-secondary border-opacity-25 py-3 px-4">
+                    <div class="d-flex align-items-center gap-2">
+                        <i id="appAlertIcon" class="bi bi-info-circle-fill text-primary fs-5"></i>
+                        <h5 class="modal-title fw-bold text-white mb-0" id="appAlertTitle">Notification</h5>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body py-4 px-4" id="appAlertMessage" style="color: #cbd5e1; font-size: 14.5px; line-height: 1.6;">
+                    Notification
+                </div>
+                <div class="modal-footer border-top border-secondary border-opacity-25 py-3 px-4 d-flex justify-content-end">
+                    <button type="button" class="btn btn-primary px-4 py-1 fw-semibold" id="appAlertOkBtn" data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Global In-App Dialog Helper (Replaces native browser alert and confirm) -->
+    <script>
+    (function() {
+        window.appConfirm = function(optionsOrMessage, title = "Confirm Action", confirmVariant = "danger") {
+            return new Promise((resolve) => {
+                const modalEl = document.getElementById('appUniversalModal');
+                if (!modalEl || typeof bootstrap === 'undefined') {
+                    const msg = typeof optionsOrMessage === 'object' ? optionsOrMessage.message : optionsOrMessage;
+                    resolve(window.confirm(msg));
+                    return;
+                }
+
+                let opts = {
+                    title: title,
+                    message: "",
+                    icon: "bi-question-circle-fill",
+                    confirmText: "Confirm",
+                    cancelText: "Cancel",
+                    confirmVariant: confirmVariant
+                };
+
+                if (typeof optionsOrMessage === 'string') {
+                    opts.message = optionsOrMessage;
+                    opts.title = title;
+                    opts.confirmVariant = confirmVariant;
+                } else if (typeof optionsOrMessage === 'object' && optionsOrMessage !== null) {
+                    opts = Object.assign(opts, optionsOrMessage);
+                }
+
+                document.getElementById('appUniversalModalTitle').textContent = opts.title || "Confirm Action";
+                document.getElementById('appUniversalModalBody').textContent = opts.message || "";
+
+                const iconEl = document.getElementById('appUniversalModalIcon');
+                if (iconEl) {
+                    const colorClass = opts.confirmVariant === 'danger' ? 'text-danger' :
+                                       opts.confirmVariant === 'warning' ? 'text-warning' :
+                                       opts.confirmVariant === 'success' ? 'text-success' : 'text-primary';
+                    const iconName = opts.icon || (opts.confirmVariant === 'danger' ? 'bi-exclamation-triangle-fill' : 'bi-question-circle-fill');
+                    iconEl.className = `bi ${iconName} fs-5 ${colorClass}`;
+                }
+
+                const confirmBtn = document.getElementById('appUniversalModalConfirmBtn');
+                confirmBtn.textContent = opts.confirmText || "Confirm";
+                confirmBtn.className = `btn btn-${opts.confirmVariant || 'primary'} px-4 py-1 fw-semibold`;
+
+                const cancelBtn = document.getElementById('appUniversalModalCancelBtn');
+                if (opts.cancelText) {
+                    cancelBtn.style.display = 'inline-block';
+                    cancelBtn.textContent = opts.cancelText;
+                } else {
+                    cancelBtn.style.display = 'none';
+                }
+
+                const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl, {
+                    backdrop: "static",
+                    keyboard: true,
+                    focus: true
+                });
+
+                let settled = false;
+                let onConfirm;
+                let onHidden;
+
+                const settle = (value) => {
+                    if (settled) return;
+                    settled = true;
+                    if (modalEl._appConfirmCleanup === cleanup) {
+                        modalEl._appConfirmCleanup = null;
+                    }
+                    if (onConfirm) confirmBtn.removeEventListener('click', onConfirm);
+                    if (onHidden) modalEl.removeEventListener('hidden.bs.modal', onHidden);
+                    resolve(value);
+                };
+
+                const cleanup = () => settle(false);
+
+                if (typeof modalEl._appConfirmCleanup === 'function') {
+                    modalEl._appConfirmCleanup();
+                }
+                modalEl._appConfirmCleanup = cleanup;
+
+                onConfirm = () => {
+                    settle(true);
+                    bsModal.hide();
+                };
+
+                onHidden = () => {
+                    settle(false);
+                };
+
+                confirmBtn.addEventListener('click', onConfirm);
+                modalEl.addEventListener('hidden.bs.modal', onHidden);
+                bsModal.show();
+            });
+        };
+
+        window.appAlert = function(message, title = "Notification", icon = "bi-info-circle-fill", variant = "primary") {
+            return new Promise((resolve) => {
+                const modalEl = document.getElementById('appAlertModal');
+                if (!modalEl || typeof bootstrap === 'undefined') {
+                    const msg = typeof message === 'object' && message !== null ? (message.message || "") : message;
+                    window.alert(msg);
+                    resolve();
+                    return;
+                }
+
+                let alertTitle = title || "Notification";
+                let alertMessage = "";
+                let alertIcon = icon || "bi-info-circle-fill";
+                let alertVariant = variant || "primary";
+
+                if (typeof message === 'string') {
+                    alertMessage = message;
+                } else if (typeof message === 'object' && message !== null) {
+                    alertMessage = message.message || "";
+                    alertTitle = message.title || title || "Notification";
+                    alertIcon = message.icon || icon || "bi-info-circle-fill";
+                    alertVariant = message.variant || message.confirmVariant || variant || "primary";
+                }
+
+                const titleEl = document.getElementById('appAlertTitle');
+                if (titleEl) titleEl.textContent = alertTitle;
+
+                const msgEl = document.getElementById('appAlertMessage');
+                if (msgEl) msgEl.textContent = alertMessage;
+
+                const iconEl = document.getElementById('appAlertIcon');
+                if (iconEl) {
+                    const colorClass = alertVariant === 'danger' ? 'text-danger' :
+                                       alertVariant === 'warning' ? 'text-warning' :
+                                       alertVariant === 'success' ? 'text-success' : 'text-primary';
+                    const iconName = alertIcon || 'bi-info-circle-fill';
+                    iconEl.className = `bi ${iconName} fs-5 ${colorClass}`;
+                }
+
+                const okBtn = document.getElementById('appAlertOkBtn');
+                if (okBtn) {
+                    okBtn.className = `btn btn-${alertVariant} px-4 py-1 fw-semibold`;
+                }
+
+                const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl, {
+                    backdrop: "static",
+                    keyboard: true,
+                    focus: true
+                });
+
+                let settled = false;
+                let onOk;
+                let onHidden;
+
+                const settle = () => {
+                    if (settled) return;
+                    settled = true;
+                    if (modalEl._appAlertCleanup === cleanup) {
+                        modalEl._appAlertCleanup = null;
+                    }
+                    if (onOk && okBtn) okBtn.removeEventListener('click', onOk);
+                    if (onHidden) modalEl.removeEventListener('hidden.bs.modal', onHidden);
+                    resolve();
+                };
+
+                const cleanup = () => settle();
+
+                if (typeof modalEl._appAlertCleanup === 'function') {
+                    modalEl._appAlertCleanup();
+                }
+                modalEl._appAlertCleanup = cleanup;
+
+                onOk = () => {
+                    settle();
+                    bsModal.hide();
+                };
+
+                onHidden = () => {
+                    settle();
+                };
+
+                if (okBtn) okBtn.addEventListener('click', onOk);
+                modalEl.addEventListener('hidden.bs.modal', onHidden);
+                bsModal.show();
+            });
+        };
+    })();
+    </script>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

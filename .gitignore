@@ -1,0 +1,28 @@
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python virtual environments & cache
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# SQLite databases & journals
+*.db
+*.db-journal
+
+# Calibration & model data
+calibration_profile.json
+calibration_model.joblib
+models/face_landmarker.task
+
+# IDE & OS specific files
+.DS_Store
+.vscode/
+.idea/
+*.log

@@ -1,0 +1,671 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Vision Gaze Assistant - Patient Communication{% endblock %}
+
+{% block content %}
+<!-- Live Gaze Cursor Reticle -->
+<div id="gaze-cursor" class="gaze-cursor" style="opacity: 0.25; display: flex;">
+    <div class="cursor-ring"></div>
+    <div class="cursor-dot"></div>
+    <div class="cursor-pulse"></div>
+    <div class="cursor-crosshair ch-h"></div>
+    <div class="cursor-crosshair ch-v"></div>
+</div>
+
+<div class="container-fluid patient-app py-2 px-3">
+
+    <!-- Top Patient Header & Navigation (Compact Single-Bar with System Controls Dropdown) -->
+    <header class="patient-header card shadow-sm mb-2 position-relative" style="z-index: 1050;">
+        <div class="card-body py-2 px-3">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <!-- Left: Brand Logo & Title -->
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-eye fs-3 text-primary"></i>
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h1 class="h6 mb-0 fw-bold text-white">AI-Vision Gaze Assistant</h1>
+                            <span class="badge text-bg-primary bg-opacity-25 text-primary border border-primary small py-0 px-2">Both-Eye</span>
+                        </div>
+                        <small class="text-secondary" style="font-size: 11px;">Patient Communication Assistant</small>
+                    </div>
+                </div>
+
+                <!-- Right: System Controls Dropdown, Dashboard Link & Caregiver Auth -->
+                <div class="d-flex align-items-center gap-2">
+                    <!-- System Controls Compact Dropdown (Image 5 Controls Container) -->
+                    <div class="dropdown d-inline-block position-relative" id="system-controls-dropdown-wrapper">
+                        <button class="btn btn-sm btn-outline-secondary d-inline-flex align-items-center gap-1" id="btn-system-controls-toggle" type="button" aria-expanded="false" title="System Hardware, Camera & Vision Controls">
+                            <i class="bi bi-sliders text-primary"></i>
+                            <span class="fw-semibold">System Controls</span>
+                            <i class="bi bi-chevron-down ms-1" id="sys-ctrl-chevron" style="font-size: 11px;"></i>
+                        </button>
+
+                        <!-- Floating Overlay Menu (Does NOT shift or resize patient cards) -->
+                        <div class="system-controls-dropdown-menu shadow-lg p-3" id="system-controls-menu" style="display: none;">
+                            <!-- Header -->
+                            <div class="d-flex align-items-center justify-content-between pb-2 mb-2 border-bottom border-secondary border-opacity-25">
+                                <span class="text-secondary small fw-semibold text-uppercase" style="font-size: 11px; letter-spacing: 0.5px;">System & Hardware Controls</span>
+                                <button type="button" class="btn-close btn-close-white small" id="btn-close-system-controls" aria-label="Close" style="font-size: 10px;"></button>
+                            </div>
+
+                            <!-- Group 1: Live Status & Telemetry -->
+                            <div class="mb-2">
+                                <span class="d-block text-secondary small mb-1" style="font-size: 11px;">Live Vision Telemetry</span>
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <div class="telemetry-pill d-inline-flex align-items-center gap-1 py-1 px-2" id="vision-status-pill">
+                                        <span class="status-indicator live" id="status-dot"></span>
+                                        <span id="vision-status-text" class="small">Adaptive Tracking Active</span>
+                                    </div>
+
+                                    <div class="telemetry-pill d-inline-flex align-items-center gap-1 py-1 px-2 text-secondary">
+                                        <i class="bi bi-person-bounding-box text-primary"></i>
+                                        <span id="head-pose-text" class="small">Yaw: 0.0° | Pitch: 0.0°</span>
+                                    </div>
+
+                                    <div class="telemetry-pill d-inline-flex align-items-center gap-1 py-1 px-2 text-secondary" id="dwell-display-pill">
+                                        <i class="bi bi-stopwatch text-info"></i>
+                                        <span class="small">Dwell: <strong id="current-dwell-label">{{ config.dwell_time_seconds }}s</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Group 2: Camera Controls -->
+                            <div class="mb-2 pt-2 border-top border-secondary border-opacity-25">
+                                <span class="d-block text-secondary small mb-1" style="font-size: 11px;">Webcam Source & Stream</span>
+                                <div class="d-flex align-items-center flex-wrap gap-2">
+                                    <div class="nav-cam-pill d-inline-flex align-items-center gap-1 py-0 px-2" id="cam-switch-container" title="Camera Device">
+                                        <i class="bi bi-camera-video text-primary"></i>
+                                        <select id="quick-camera-select" class="nav-cam-dropdown small py-0" aria-label="Camera Device">
+                                            <option value="0" {% if config.camera_index == 0 %}selected{% endif %}>System Camera (0)</option>
+                                            <option value="1" {% if config.camera_index == 1 %}selected{% endif %}>External Camera (1)</option>
+                                        </select>
+                                    </div>
+
+                                    <button class="action-btn btn-sm py-1 px-2" id="btn-toggle-camera-power" title="Turn Camera Off or On">
+                                        <i class="bi bi-camera-video" id="cam-power-icon"></i>
+                                        <span id="cam-power-text">Turn Off Camera</span>
+                                    </button>
+
+                                    <button type="button" id="btn-toggle-mirror" class="btn btn-outline-light action-btn btn-sm py-1 px-2" title="Toggle Camera Mirror">
+                                        <i class="bi bi-symmetry-horizontal"></i>
+                                        <span id="mirror-btn-text">Mirror: ON</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Group 3: Calibration & Vision Tools -->
+                            <div class="pt-2 border-top border-secondary border-opacity-25">
+                                <span class="d-block text-secondary small mb-1" style="font-size: 11px;">Vision & Calibration Actions</span>
+                                <div class="d-flex align-items-center flex-wrap gap-1">
+                                    <button class="action-btn btn-sm py-1 px-2" id="btn-open-calibration" title="Calibrate Eye Gaze">
+                                        <i class="bi bi-bullseye text-primary"></i>
+                                        <span>Calibrate</span>
+                                    </button>
+
+                                    <button class="action-btn btn-sm py-1 px-2" id="btn-recenter" title="Re-center Baseline (Key: C)">
+                                        <i class="bi bi-crosshair text-info"></i>
+                                        <span>Re-Center</span>
+                                    </button>
+
+                                    <button class="action-btn btn-sm py-1 px-2" id="btn-toggle-cam" title="Toggle Webcam HUD Preview">
+                                        <i class="bi bi-aspect-ratio text-warning"></i>
+                                        <span id="cam-btn-text">HUD View</span>
+                                    </button>
+
+                                    <button class="action-btn btn-sm py-1 px-2" id="btn-open-logs" title="View Request History Log">
+                                        <i class="bi bi-clock-history text-success"></i>
+                                        <span>Logs</span>
+                                    </button>
+
+                                    <button class="action-btn btn-sm icon-only py-1 px-2" id="btn-open-settings" title="Caregiver & Email Settings">
+                                        <i class="bi bi-gear text-secondary"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <a href="/caregiver/dashboard" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+
+                    <span class="badge text-bg-secondary bg-opacity-25 text-light border border-secondary d-inline-flex align-items-center gap-1 py-1 px-2 small" title="Alert Recipient">
+                        <i class="bi bi-person"></i>
+                        <span>{{ caregiver_name }}</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Flashed Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+        <div class="alert alert-{{ category if category != 'error' else 'danger' }} alert-dismissible fade show d-flex align-items-center gap-2 small py-2 px-3 mb-2" role="alert">
+            <i class="bi bi-info-circle-fill"></i>
+            <div>{{ message }}</div>
+            <button type="button" class="btn-close btn-close-white ms-auto py-2 px-3" data-bs-dismiss="alert" aria-label="Close" style="font-size: 10px;"></button>
+        </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+
+    <!-- Face Detection Warning Alert Banner (Hidden by default; no conflicting d-flex) -->
+    <div class="face-lost-banner alert alert-danger align-items-center gap-2 py-2 px-3 mb-2 d-none" id="face-lost-banner" role="alert">
+        <i class="bi bi-person-x-fill fs-5 text-danger"></i>
+        <div class="alert-content small">
+            <strong>Face Not Detected:</strong>
+            <span>Card dwelling is paused. Position face in front of the webcam to resume touchless eye tracking.</span>
+        </div>
+    </div>
+
+    <!-- Main Patient Communication 2x2 Grid -->
+    <main class="patient-card-grid" id="blocks-grid">
+        {% for block in blocks %}
+        <div class="request-card" id="card-{{ block.id }}" data-block-id="{{ block.id }}"
+            data-key="{{ block.number }}" data-title="{{ block.title }}" data-category="{{ block.category }}"
+            data-priority="{{ block.priority }}" data-message="{{ block.message }}"
+            data-accent="{{ block.accent }}"
+            style="--card-accent: {{ block.accent }}; --card-secondary: {{ block.secondary_accent }};">
+
+            <!-- Card Header: Hotkey Number & Category & Priority Badge -->
+            <div class="card-meta">
+                <div class="card-key-badge" title="Press keyboard key {{ block.number }} to trigger">
+                    <span class="key-label">KEY</span>
+                    <span class="key-digit">{{ block.number }}</span>
+                </div>
+                <span class="category-tag">{{ block.category }}</span>
+                <span class="priority-badge priority-{{ block.priority.lower() }}">{{ block.priority }}</span>
+            </div>
+
+            <!-- Card Body: Icon & Title -->
+            <div class="card-body">
+                <div class="icon-wrapper">
+                    <i class="bi {{ block.bs_icon }} card-icon"></i>
+                </div>
+                <h2 class="card-title">{{ block.title }}</h2>
+                <p class="card-desc">{{ block.description }}</p>
+            </div>
+
+            <!-- Dwell Progress Radial SVG Bar -->
+            <div class="dwell-wrapper">
+                <svg class="dwell-svg" viewBox="0 0 100 100">
+                    <circle class="dwell-circle-bg" cx="50" cy="50" r="42"></circle>
+                    <circle class="dwell-circle-fill" id="dwell-circle-{{ block.id }}" cx="50" cy="50" r="42"></circle>
+                </svg>
+                <div class="dwell-info">
+                    <span class="dwell-time-left" id="dwell-text-{{ block.id }}">LOOK</span>
+                </div>
+            </div>
+
+            <!-- Lock Badge (Shown when locked) -->
+            <div class="card-lock-badge" id="lock-badge-{{ block.id }}">
+                <i class="bi bi-lock-fill me-1"></i>
+                <span>LOCKED</span>
+            </div>
+
+            <!-- Active Border Glow -->
+            <div class="card-glow-border"></div>
+        </div>
+        {% endfor %}
+    </main>
+
+    <!-- Bottom Single Compact Horizontal Status Bar -->
+    <footer class="patient-footer card shadow-sm mt-2">
+        <div class="card-body py-1 px-3 d-flex flex-wrap justify-content-between align-items-center gap-2 small">
+            <div class="d-flex align-items-center flex-wrap gap-2 text-white">
+                <i class="bi bi-person-fill text-primary"></i>
+                <span>Patient: <strong id="patient-name-display">{{ config.patient_name }}</strong></span>
+                <span class="text-secondary mx-1">|</span>
+                <i class="bi bi-envelope-check text-warning"></i>
+                <span>Caregiver Alert: <strong id="caregiver-email-display">{{ config.caregiver_email }}</strong></span>
+            </div>
+
+            <div class="cooldown-indicator" id="cooldown-bar">
+                <div class="cooldown-fill" id="cooldown-fill"></div>
+            </div>
+        </div>
+    </footer>
+
+</div>
+
+<!-- ======================================================== -->
+<!-- EYE GAZE 5-POINT CALIBRATION OVERLAY (EXACT DIMENSIONS)  -->
+<!-- ======================================================== -->
+<div id="calibration-modal" class="calibration-overlay hidden">
+    <div class="calibration-page container-fluid">
+
+        <div class="calibration-header card mb-2">
+            <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-3">
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <h2 class="h5 mb-0 fw-bold text-white">
+                                <i class="bi bi-bullseye text-primary me-1"></i>
+                                Five-Point Eye Calibration
+                            </h2>
+                            <span class="badge text-bg-primary px-2 py-1" id="calib-step-badge">Point 1 of 5</span>
+                            <span class="fw-bold text-white small" id="calib-point-name">TOP RIGHT</span>
+                            <span class="badge text-bg-warning ms-1" id="calib-box-badge">POINT 1: TOP RIGHT</span>
+                            <span class="badge text-bg-info d-none" id="calib-accuracy-pill">Calibrated</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 mt-1">
+                            <small class="text-secondary" id="calib-instruction">Look at and hold your cursor inside the highlighted target</small>
+                            <small class="text-secondary" id="calib-box-sublabel">Look at and hold your cursor inside the highlighted target</small>
+                            <small class="text-info fw-semibold" id="calib-countdown-text">Hold gaze inside target</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-3">
+                    <div class="progress" style="width: 140px; height: 8px;">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" id="calib-progress-bar" style="width: 0%;">
+                            <div id="calib-box-fill" style="width: 100%; height: 100%;"></div>
+                        </div>
+                    </div>
+                    <button class="btn btn-warning btn-sm d-inline-flex align-items-center gap-1" id="btn-skip-calibration">
+                        <i class="bi bi-skip-forward"></i>
+                        <span>Skip Calibration</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5-Target Grid: Row 1: TR (0.90, 0.10), TL (0.10, 0.10) | Row 2: Centre (0.50, 0.50) | Row 3: BR (0.90, 0.90), BL (0.10, 0.90) -->
+        <div class="calibration-target-grid" id="calibration-box">
+            <!-- TOP ROW: Target 1 - Top Right (0.90, 0.10) -->
+            <div class="calibration-target target-top-right" data-target-id="top_right">
+                <div class="dwell-wrapper">
+                    <svg class="dwell-svg" viewBox="0 0 100 100">
+                        <circle class="dwell-circle-bg" cx="50" cy="50" r="42"></circle>
+                        <circle class="dwell-circle-fill" id="calib-dwell-circle-top_right" cx="50" cy="50" r="42"></circle>
+                    </svg>
+                    <div class="dwell-info">
+                        <span class="dwell-time-left" id="calib-dwell-text-top_right">LOOK</span>
+                    </div>
+                </div>
+                <span class="badge text-bg-primary">POINT 1</span>
+                <i class="bi bi-bullseye"></i>
+                <h4>TOP RIGHT</h4>
+                <small>(0.90, 0.10)</small>
+                <span class="target-status">WAITING</span>
+            </div>
+
+            <!-- TOP ROW: Target 2 - Top Left (0.10, 0.10) -->
+            <div class="calibration-target target-top-left" data-target-id="top_left">
+                <div class="dwell-wrapper">
+                    <svg class="dwell-svg" viewBox="0 0 100 100">
+                        <circle class="dwell-circle-bg" cx="50" cy="50" r="42"></circle>
+                        <circle class="dwell-circle-fill" id="calib-dwell-circle-top_left" cx="50" cy="50" r="42"></circle>
+                    </svg>
+                    <div class="dwell-info">
+                        <span class="dwell-time-left" id="calib-dwell-text-top_left">LOOK</span>
+                    </div>
+                </div>
+                <span class="badge text-bg-primary">POINT 2</span>
+                <i class="bi bi-bullseye"></i>
+                <h4>TOP LEFT</h4>
+                <small>(0.10, 0.10)</small>
+                <span class="target-status">WAITING</span>
+            </div>
+
+            <!-- MIDDLE ROW: Target 5 - Centre (0.50, 0.50) Prominently Centred -->
+            <div class="calibration-target calibration-center" data-target-id="center">
+                <div class="dwell-wrapper">
+                    <svg class="dwell-svg" viewBox="0 0 100 100">
+                        <circle class="dwell-circle-bg" cx="50" cy="50" r="42"></circle>
+                        <circle class="dwell-circle-fill" id="calib-dwell-circle-center" cx="50" cy="50" r="42"></circle>
+                    </svg>
+                    <div class="dwell-info">
+                        <span class="dwell-time-left" id="calib-dwell-text-center">LOOK</span>
+                    </div>
+                </div>
+                <span class="badge text-bg-primary">POINT 5</span>
+                <i class="bi bi-bullseye"></i>
+                <h4>CENTRE</h4>
+                <small>(0.50, 0.50)</small>
+                <span class="target-status">WAITING</span>
+            </div>
+
+            <!-- BOTTOM ROW: Target 3 - Bottom Right (0.90, 0.90) -->
+            <div class="calibration-target target-bottom-right" data-target-id="bottom_right">
+                <div class="dwell-wrapper">
+                    <svg class="dwell-svg" viewBox="0 0 100 100">
+                        <circle class="dwell-circle-bg" cx="50" cy="50" r="42"></circle>
+                        <circle class="dwell-circle-fill" id="calib-dwell-circle-bottom_right" cx="50" cy="50" r="42"></circle>
+                    </svg>
+                    <div class="dwell-info">
+                        <span class="dwell-time-left" id="calib-dwell-text-bottom_right">LOOK</span>
+                    </div>
+                </div>
+                <span class="badge text-bg-primary">POINT 3</span>
+                <i class="bi bi-bullseye"></i>
+                <h4>BOTTOM RIGHT</h4>
+                <small>(0.90, 0.90)</small>
+                <span class="target-status">WAITING</span>
+            </div>
+
+            <!-- BOTTOM ROW: Target 4 - Bottom Left (0.10, 0.90) -->
+            <div class="calibration-target target-bottom-left" data-target-id="bottom_left">
+                <div class="dwell-wrapper">
+                    <svg class="dwell-svg" viewBox="0 0 100 100">
+                        <circle class="dwell-circle-bg" cx="50" cy="50" r="42"></circle>
+                        <circle class="dwell-circle-fill" id="calib-dwell-circle-bottom_left" cx="50" cy="50" r="42"></circle>
+                    </svg>
+                    <div class="dwell-info">
+                        <span class="dwell-time-left" id="calib-dwell-text-bottom_left">LOOK</span>
+                    </div>
+                </div>
+                <span class="badge text-bg-primary">POINT 4</span>
+                <i class="bi bi-bullseye"></i>
+                <h4>BOTTOM LEFT</h4>
+                <small>(0.10, 0.90)</small>
+                <span class="target-status">WAITING</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ======================================================== -->
+<!-- LOCKOUT SCREEN OVERLAY                                   -->
+<!-- ======================================================== -->
+<div id="lockout-modal" class="lockout-overlay">
+    <div class="lockout-card card shadow-lg p-4 text-center border-secondary">
+        <div class="lockout-icon-box mb-3">
+            <i class="bi bi-shield-lock-fill fs-1 text-warning" id="lock-shield-icon"></i>
+        </div>
+        <h2 class="lockout-title h4 fw-bold text-white mb-2" id="lockout-block-title">REQUEST LOCKED</h2>
+        <div class="lockout-badge badge text-bg-warning mb-3" id="lockout-priority-badge">PROCESSING</div>
+
+        <p class="lockout-message text-secondary small mb-4" id="lockout-desc">
+            Communication request locked. Sending automated alert to caregiver...
+        </p>
+
+        <div class="lockout-steps text-start mb-4">
+            <div class="step-item completed d-flex align-items-center gap-2 mb-2 text-success small" id="step-dwell">
+                <i class="bi bi-check-circle-fill"></i>
+                <span id="step-dwell-text">Sustained Gaze Verified</span>
+            </div>
+            <div class="step-item active d-flex align-items-center gap-2 mb-2 text-warning small" id="step-email">
+                <div class="spinner-border spinner-border-sm" role="status"></div>
+                <span id="step-email-text">Caregiver Email Dispatching...</span>
+            </div>
+            <div class="step-item d-flex align-items-center gap-2 text-secondary small" id="step-db">
+                <i class="bi bi-database"></i>
+                <span id="step-db-text">SQLite Request Logged</span>
+            </div>
+        </div>
+
+        <div class="alert alert-secondary py-2 px-3 small text-start mb-3">
+            <i class="bi bi-shield-check text-primary me-1"></i>
+            <span>Safety Protocol: All other options are locked to prevent duplicate alerts.</span>
+        </div>
+
+        <button class="btn btn-outline-danger w-100 d-inline-flex align-items-center justify-content-center gap-2" id="btn-manual-unlock">
+            <i class="bi bi-unlock"></i>
+            <span>Caregiver Override Unlock</span>
+        </button>
+    </div>
+</div>
+
+<!-- Draggable Picture-in-Picture Webcam HUD Preview -->
+<div id="cam-pip-window" class="cam-pip-window hidden">
+    <div class="pip-header">
+        <div class="pip-title d-flex align-items-center gap-2">
+            <i class="bi bi-camera-video text-primary"></i>
+            <span id="pip-title-text">AI Vision HUD</span>
+        </div>
+        <div class="pip-actions-group">
+            <button type="button" id="btn-pip-mirror" class="btn btn-sm btn-outline-light" title="Toggle Camera Mirror"><i class="bi bi-symmetry-horizontal"></i></button>
+            <button class="pip-close btn btn-sm btn-link text-white p-0" id="btn-close-pip">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+    </div>
+    <div class="pip-body">
+        <img id="pip-video-stream" src="/video_feed" alt="Live Camera HUD">
+        <div class="pip-stats">
+            <span id="pip-fps-text">30 FPS</span>
+            <span id="pip-cam-label">System Cam</span>
+            <span id="pip-blink-text">Eyes Open</span>
+        </div>
+    </div>
+</div>
+
+<!-- Request Logs Drawer / Modal -->
+<div id="logs-modal" class="legacy-modal-overlay hidden">
+    <div class="modal-window">
+        <div class="modal-header d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-clock-history text-primary fs-5"></i>
+                <h5 class="mb-0 text-white">Patient Request History Log</h5>
+            </div>
+            <div class="d-flex align-items-center gap-2">
+                <a href="/api/logs/export" class="btn btn-sm btn-outline-primary d-inline-flex align-items-center gap-1" download>
+                    <i class="bi bi-download"></i>
+                    <span>Export CSV</span>
+                </a>
+                <button class="btn btn-sm btn-outline-danger d-inline-flex align-items-center gap-1" id="btn-clear-logs">
+                    <i class="bi bi-trash3"></i>
+                    <span>Clear</span>
+                </button>
+                <button class="btn btn-sm btn-link text-white p-0 ms-2" id="btn-close-logs">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+            </div>
+        </div>
+        <div class="modal-body p-3">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0 align-middle small">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>Request</th>
+                            <th>Priority</th>
+                            <th>Caregiver Email</th>
+                            <th>Status</th>
+                            <th>Latency</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table-body">
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-secondary">Loading history logs...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Caregiver Settings Modal -->
+<div id="settings-modal" class="legacy-modal-overlay hidden">
+    <div class="modal-window" style="max-width: 650px;">
+        <div class="modal-header d-flex justify-content-between align-items-center p-3 border-bottom border-secondary">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-gear text-primary fs-5"></i>
+                <h5 class="mb-0 text-white">Caregiver Configuration</h5>
+            </div>
+            <button class="btn btn-sm btn-link text-white p-0" id="btn-close-settings">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+
+        <div class="modal-body p-3">
+            <form id="settings-form">
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Patient Name</label>
+                    <input type="text" class="form-control bg-dark border-secondary text-white" id="cfg-patient-name" name="patient_name" value="{{ config.patient_name }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Caregiver Email</label>
+                    <input type="email" class="form-control bg-dark border-secondary text-white" id="cfg-caregiver-email" name="caregiver_email" value="{{ config.caregiver_email }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Caregiver Phone</label>
+                    <input type="text" class="form-control bg-dark border-secondary text-white" id="cfg-caregiver-phone" name="caregiver_phone" value="{{ config.caregiver_phone }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Camera Source</label>
+                    <select id="cfg-camera-device" name="camera_index" class="form-select bg-dark border-secondary text-white">
+                        <option value="0" {% if config.camera_index == 0 %}selected{% endif %}>System Camera (0)</option>
+                        <option value="1" {% if config.camera_index == 1 %}selected{% endif %}>External Camera (1)</option>
+                        <option value="2" {% if config.camera_index == 2 %}selected{% endif %}>Secondary Camera (2)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Mirroring</label>
+                    <select id="cfg-mirror-view" name="mirror_view" class="form-select bg-dark border-secondary text-white">
+                        <option value="1" {% if config.mirror_view %}selected{% endif %}>Mirrored View (Natural)</option>
+                        <option value="0" {% if not config.mirror_view %}selected{% endif %}>Standard View (Unmirrored)</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="cfg-tracking-mode" class="form-label text-light small">Iris Tracking Mode</label>
+                    <select id="cfg-tracking-mode" name="tracking_mode" class="form-select bg-dark text-light border-secondary">
+                        <option value="both_eyes" {% if config.tracking_mode == 'both_eyes' %}selected{% endif %}>Both Eyes (Recommended)</option>
+                        <option value="left_eye" {% if config.tracking_mode == 'left_eye' %}selected{% endif %}>Left Eye Only</option>
+                        <option value="right_eye" {% if config.tracking_mode == 'right_eye' %}selected{% endif %}>Right Eye Only</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold d-flex justify-content-between">
+                        <span>Card Dwell Duration</span>
+                        <strong class="text-primary" id="val-dwell-time">{{ config.dwell_time_seconds }}s</strong>
+                    </label>
+                    <input type="range" class="form-range" id="cfg-dwell-time" name="dwell_time_seconds" min="1.0" max="5.0" step="0.1" value="{{ config.dwell_time_seconds }}">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold d-flex justify-content-between">
+                        <span>Calibration Dwell Duration</span>
+                        <strong class="text-primary" id="val-calib-dwell-time">{{ config.calibration_dwell_seconds|default(1.5) }}s</strong>
+                    </label>
+                    <input type="range" class="form-range" id="cfg-calib-dwell-time" name="calibration_dwell_seconds" min="0.8" max="5.0" step="0.1" value="{{ config.calibration_dwell_seconds|default(1.5) }}">
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label text-secondary small fw-bold d-flex justify-content-between">
+                            <span>Head Sensitivity</span>
+                            <strong class="text-info" id="val-head-sens">{{ config.head_sensitivity }}</strong>
+                        </label>
+                        <input type="range" class="form-range" id="cfg-head-sensitivity" name="head_sensitivity" min="0.5" max="2.5" step="0.1" value="{{ config.head_sensitivity }}">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-secondary small fw-bold d-flex justify-content-between">
+                            <span>Eye Sensitivity</span>
+                            <strong class="text-info" id="val-eye-sens">{{ config.eye_sensitivity }}</strong>
+                        </label>
+                        <input type="range" class="form-range" id="cfg-eye-sensitivity" name="eye_sensitivity" min="0.5" max="2.5" step="0.1" value="{{ config.eye_sensitivity }}">
+                    </div>
+                </div>
+
+                <div class="form-check form-switch mb-3">
+                    <input class="form-check-input" type="checkbox" role="switch" id="cfg-sound-enabled" name="sound_enabled" {% if config.sound_enabled %}checked{% endif %}>
+                    <label class="form-check-label text-white small" for="cfg-sound-enabled">
+                        Audio Chimes on Dwell
+                    </label>
+                </div>
+
+                <div class="mb-3 p-2 rounded border border-secondary bg-dark">
+                    <div class="form-check form-switch mb-1">
+                        <input class="form-check-input" type="checkbox" role="switch" id="cfg-simulation-mode" name="simulation_mode" {% if config.simulation_mode %}checked{% endif %}>
+                        <label class="form-check-label text-white small fw-bold" for="cfg-simulation-mode">
+                            Simulation Mode
+                        </label>
+                        <span class="badge {% if config.simulation_mode %}text-bg-warning{% else %}text-bg-success{% endif %} ms-2" id="smtp-mode-badge">
+                            {% if config.simulation_mode %}Simulation Mode{% else %}Live Brevo{% endif %}
+                        </span>
+                    </div>
+                    <div id="smtp-mode-text" class="small {% if config.simulation_mode %}text-warning{% else %}text-success{% endif %}">
+                        {% if config.simulation_mode %}
+                        <i class="bi bi-info-circle me-1"></i>Simulation mode — no real email is sent
+                        {% else %}
+                        <i class="bi bi-check-circle me-1"></i>Live Brevo mode — sends to configured caregiver alert email
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <label class="form-label text-secondary small fw-bold">Email Provider</label>
+                        <input type="text" class="form-control bg-dark border-secondary text-white small" id="cfg-email-provider" name="email_provider" value="Brevo" readonly>
+                    </div>
+                    <div class="col-6">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="form-label text-secondary small fw-bold mb-0">Brevo API Key</label>
+                            <span id="modal-brevo-key-status" class="badge {% if config.has_brevo_api_key %}text-bg-success{% else %}text-bg-secondary{% endif %}" style="font-size: 0.68rem;">
+                                {% if config.has_brevo_api_key %}Brevo API key configured{% else %}No API key saved{% endif %}
+                            </span>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <input type="password" class="form-control bg-dark border-secondary text-white small" id="cfg-brevo-api-key" name="brevo_api_key" value="" placeholder="{% if config.has_brevo_api_key %}Leave blank to keep saved key{% else %}Enter Brevo API key{% endif %}" autocomplete="off">
+                            <button class="btn btn-outline-secondary" type="button" id="btn-toggle-modal-brevo-key" title="Show/Hide API Key" aria-label="Show/Hide API Key">
+                                <i class="bi bi-eye" id="icon-modal-brevo-key"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-secondary small fw-bold">Sender Name</label>
+                        <input type="text" class="form-control bg-dark border-secondary text-white small" id="cfg-brevo-sender-name" name="brevo_sender_name" value="{{ config.brevo_sender_name|default('Eye Gaze AI') }}" placeholder="Eye Gaze AI">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label text-secondary small fw-bold">Sender Email (Verified)</label>
+                        <input type="email" class="form-control bg-dark border-secondary text-white small" id="cfg-brevo-sender-email" name="brevo_sender_email" value="{{ config.brevo_sender_email|default('ogjoyboy21@gmail.com') }}" placeholder="ogjoyboy21@gmail.com">
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center gap-2 mb-3">
+                    <button type="button" class="btn btn-sm btn-outline-warning" id="btn-test-email">
+                        <i class="bi bi-send me-1"></i> Send Test Email
+                    </button>
+                    <span id="test-email-feedback" class="small"></span>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 pt-3 border-top border-secondary">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-settings">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-save-settings">
+                        <i class="bi bi-save me-1"></i> Save Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container" class="toast-container"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+<script>
+if (window.location.search.includes('show_calibration=1')) {
+    window.addEventListener('DOMContentLoaded', () => {
+        setTimeout(() => {
+            const calib = document.getElementById('calibration-modal');
+            if (calib) {
+                calib.classList.remove('hidden');
+                const t = document.querySelector('.calibration-target[data-target-id="top_right"]');
+                if (t) {
+                    t.classList.add('active-target');
+                    const s = t.querySelector('.target-status');
+                    if (s) { s.textContent = 'ACTIVE'; s.className = 'target-status badge text-bg-primary'; }
+                }
+            }
+        }, 300);
+    });
+}
+</script>
+{% endblock %}

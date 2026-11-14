@@ -1,0 +1,526 @@
+{% extends "base.html" %}
+
+{% block title %}Caregiver Dashboard - EyeGaze AI{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-wrapper">
+    <div class="row min-vh-100">
+
+        <!-- Sidebar Navigation -->
+        <aside class="col-lg-2 dashboard-sidebar p-3 d-flex flex-column">
+            <div class="mb-4">
+                <h4 class="text-white mb-0">
+                    <i class="bi bi-eye text-primary me-1"></i>
+                    EyeGaze AI
+                </h4>
+                <small class="text-secondary">
+                    Caregiver Portal
+                </small>
+            </div>
+
+            <nav class="nav flex-column gap-2 mb-auto">
+                <a class="nav-link active" href="/caregiver/dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <a class="nav-link" href="/">
+                    <i class="bi bi-grid"></i>
+                    <span>Patient Communication</span>
+                </a>
+
+                <a class="nav-link" href="/caregiver/settings">
+                    <i class="bi bi-gear"></i>
+                    <span>Settings</span>
+                </a>
+
+                <a class="nav-link" href="/caregiver/history">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Request History</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer mt-4 pt-3 border-top border-secondary text-secondary small">
+                <div>Alert Recipient:</div>
+                <div class="text-white fw-semibold text-truncate">
+                    {{ caregiver_name }}
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="col-lg-10 p-4 dashboard-main">
+
+            <!-- Top Header -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Dashboard Overview</h2>
+                    <p class="text-secondary mb-0">
+                        Welcome,
+                        <strong>{{ caregiver_name }}</strong>
+                        • Room / Patient:
+                        <strong>{{ config.patient_name }}</strong>
+                    </p>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="/" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-display"></i>
+                        <span>Open Patient Interface</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Key Stat Cards -->
+            <div class="row g-3 mb-4">
+
+                <!-- Assigned Patient -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card dashboard-stat-card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-secondary small fw-bold text-uppercase">
+                                    Assigned Patient
+                                </span>
+                                <i class="bi bi-people fs-4 text-primary"></i>
+                            </div>
+
+                            <h4 class="fw-bold mb-0 text-truncate" title="{{ config.patient_name }}">
+                                {{ config.patient_name }}
+                            </h4>
+
+                            <small class="text-secondary">
+                                Communication Target
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Status -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card dashboard-stat-card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-secondary small fw-bold text-uppercase">
+                                    Camera Status
+                                </span>
+                                <i class="bi bi-camera-video fs-4 text-success"></i>
+                            </div>
+
+                            <h4 id="dashboard-camera-status" class="fw-bold mb-0">
+                                Checking...
+                            </h4>
+
+                            <small class="text-secondary" id="dashboard-camera-name">
+                                Video Capture Engine
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gaze Tracking -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card dashboard-stat-card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-secondary small fw-bold text-uppercase">
+                                    Gaze Tracking
+                                </span>
+                                <i class="bi bi-eye fs-4 text-info"></i>
+                            </div>
+
+                            <h4 id="dashboard-gaze-status" class="fw-bold mb-0">
+                                Checking...
+                            </h4>
+
+                            <small class="text-secondary">
+                                Both-Eye Estimation
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Caregiver Alert Email -->
+                <div class="col-sm-6 col-xl-3">
+                    <div class="card dashboard-stat-card shadow-sm h-100">
+                        <div class="card-body d-flex flex-column justify-content-between">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-secondary small fw-bold text-uppercase">
+                                    Caregiver Alert Email
+                                </span>
+                                <i class="bi bi-envelope fs-4 text-warning"></i>
+                            </div>
+
+                            <h4 class="small fw-bold mb-0 text-truncate" title="{{ config.caregiver_email }}">
+                                {{ config.caregiver_email }}
+                            </h4>
+
+                            <small class="text-secondary">
+                                {% if config.simulation_mode %}
+                                <span class="badge text-bg-warning">
+                                    Simulation Mode
+                                </span>
+                                {% else %}
+                                <span class="badge text-bg-success">
+                                    Live SMTP
+                                </span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Patient Communication Cards -->
+            <div class="row g-3 mb-4">
+                <div class="col-12">
+                    <div class="card dashboard-panel shadow-sm">
+
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-chat-heart text-primary me-2"></i>
+                                Patient Communication Cards
+                            </h5>
+
+                            <span class="badge text-bg-secondary">
+                                4 Configured
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+                            <div class="row g-3">
+
+                                {% for block in blocks %}
+                                <div class="col-sm-6 col-xl-3">
+
+                                    <div class="card patient-summary-card h-100 border"
+                                        style="--card-accent: {{ block.accent }};">
+
+                                        <div class="card-body d-flex flex-column justify-content-between">
+
+                                            <div>
+                                                <div class="d-flex justify-content-between align-items-center mb-2">
+
+                                                    <h5 class="card-title mb-0 d-flex align-items-center gap-2">
+                                                        <i class="bi {{ block.bs_icon }} patient-card-icon"
+                                                            style="--icon-accent: {{ block.accent }};"></i>
+
+                                                        {{ block.title }}
+                                                    </h5>
+
+                                                    <span class="badge text-bg-secondary">
+                                                        Key {{ block.number }}
+                                                    </span>
+
+                                                </div>
+
+                                                <p class="small text-secondary mb-3">
+                                                    {{ block.description }}
+                                                </p>
+                                            </div>
+
+                                            <div
+                                                class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary">
+
+                                                <span class="badge
+                                                    {% if block.priority == 'CRITICAL' %}
+                                                        text-bg-danger
+                                                    {% elif block.priority == 'HIGH' %}
+                                                        text-bg-warning
+                                                    {% else %}
+                                                        text-bg-primary
+                                                    {% endif %}">
+                                                    {{ block.priority }}
+                                                </span>
+
+                                                <small class="text-secondary">
+                                                    {{ block.category }}
+                                                </small>
+
+                                            </div>
+
+                                        </div>
+                                    </div>
+
+                                </div>
+                                {% endfor %}
+
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Vision Status & Recent Patient Requests -->
+            <div class="row g-3">
+
+                <!-- AI Vision & Calibration -->
+                <div class="col-lg-5 col-xl-4">
+                    <div class="card dashboard-panel h-100 shadow-sm">
+
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-cpu text-info me-2"></i>
+                                AI Vision & Calibration
+                            </h5>
+
+                            <span class="badge text-bg-info">
+                                LOBO-CV
+                            </span>
+                        </div>
+
+                        <div class="card-body">
+
+                            <ul class="list-group list-group-flush bg-transparent">
+
+                                <li
+                                    class="list-group-item bg-transparent text-white d-flex justify-content-between px-0 border-secondary">
+                                    <span class="text-secondary">
+                                        Tracking Mode:
+                                    </span>
+
+                                    <span class="fw-semibold">
+                                        Mandatory Both-Eye Tracking
+                                    </span>
+                                </li>
+
+                                <li
+                                    class="list-group-item bg-transparent text-white d-flex justify-content-between px-0 border-secondary">
+                                    <span class="text-secondary">
+                                        Calibration State:
+                                    </span>
+
+                                    {% if calib and calib.is_calibrated %}
+                                    <span class="badge text-bg-success">
+                                        Calibrated
+                                    </span>
+                                    {% else %}
+                                    <span class="badge text-bg-warning">
+                                        Adaptive Baseline
+                                    </span>
+                                    {% endif %}
+                                </li>
+
+                                <li
+                                    class="list-group-item bg-transparent text-white d-flex justify-content-between px-0 border-secondary">
+                                    <span class="text-secondary">
+                                        Validation MAE:
+                                    </span>
+
+                                    <span class="fw-semibold">
+                                        {% if calib and calib.val_mae_px %}
+                                        {{ "%.1f"|format(calib.val_mae_px) }} px
+                                        {% else %}
+                                        --
+                                        {% endif %}
+                                    </span>
+                                </li>
+
+                                <li
+                                    class="list-group-item bg-transparent text-white d-flex justify-content-between px-0 border-secondary">
+                                    <span class="text-secondary">
+                                        Active Model:
+                                    </span>
+
+                                    <span class="fw-semibold">
+                                        {{ (calib and calib.selected_model_name) or 'Standard Model' }}
+                                    </span>
+                                </li>
+
+                                <li
+                                    class="list-group-item bg-transparent text-white d-flex justify-content-between px-0 border-secondary">
+                                    <span class="text-secondary">
+                                        Configured Dwell:
+                                    </span>
+
+                                    <span class="fw-semibold">
+                                        {{ config.dwell_time_seconds }} seconds
+                                    </span>
+                                </li>
+
+                            </ul>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- Recent Patient Requests -->
+                <div class="col-lg-7 col-xl-8">
+                    <div class="card dashboard-panel h-100 shadow-sm">
+
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-clock-history text-primary me-2"></i>
+                                Recent Patient Requests
+                            </h5>
+
+                            <a href="/caregiver/history" class="btn btn-sm btn-outline-primary">
+                                View All
+                            </a>
+                        </div>
+
+                        <div class="card-body p-0">
+
+                            <div class="table-responsive">
+                                <table class="table table-dark table-hover mb-0 align-middle">
+
+                                    <thead>
+                                        <tr>
+                                            <th>Timestamp</th>
+                                            <th>Request</th>
+                                            <th>Priority</th>
+                                            <th>Status</th>
+                                            <th>Latency</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+
+                                        {% if recent_logs %}
+
+                                        {% for item in recent_logs %}
+                                        <tr>
+
+                                            <td class="small text-secondary font-monospace">
+                                                {{ item.timestamp }}
+                                            </td>
+
+                                            <td class="fw-semibold">
+                                                {{ item.block_title }}
+                                            </td>
+
+                                            <td>
+                                                <span class="badge
+                                                        {% if item.priority == 'CRITICAL' %}
+                                                            text-bg-danger
+                                                        {% elif item.priority == 'HIGH' %}
+                                                            text-bg-warning
+                                                        {% else %}
+                                                            text-bg-primary
+                                                        {% endif %}">
+                                                    {{ item.priority }}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span class="badge
+                                                        {% if item.status == 'DELIVERED' %}
+                                                            text-bg-success
+                                                        {% elif item.status == 'SIMULATED' %}
+                                                            text-bg-info
+                                                        {% elif item.status in ['PENDING', 'SENDING'] %}
+                                                            text-bg-warning
+                                                        {% elif item.status == 'FAILED' %}
+                                                            text-bg-danger
+                                                        {% else %}
+                                                            text-bg-secondary
+                                                        {% endif %}">
+                                                    {{ item.status }}
+                                                </span>
+                                            </td>
+
+                                            <td class="small font-monospace text-secondary">
+                                                {{ item.delivery_duration_ms }}ms
+                                            </td>
+
+                                        </tr>
+                                        {% endfor %}
+
+                                        {% else %}
+
+                                        <tr>
+                                            <td colspan="5" class="text-center text-secondary py-4">
+                                                No patient communication requests recorded yet.
+                                            </td>
+                                        </tr>
+
+                                        {% endif %}
+
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Controlled Live Telemetry Polling (every 2000ms)
+
+    async function updateDashboardStatus() {
+        try {
+            const response = await fetch("/api/telemetry");
+
+            if (!response.ok) {
+                throw new Error("Telemetry unavailable");
+            }
+
+            const data = await response.json();
+
+            const cameraStatus = document.getElementById("dashboard-camera-status");
+            const gazeStatus = document.getElementById("dashboard-gaze-status");
+            const camName = document.getElementById("dashboard-camera-name");
+
+            // Camera Status
+            if (cameraStatus) {
+                if (data.camera_enabled) {
+                    cameraStatus.innerHTML =
+                        '<span class="text-success"><i class="bi bi-check-circle-fill me-1"></i>ACTIVE</span>';
+                } else {
+                    cameraStatus.innerHTML =
+                        '<span class="text-danger"><i class="bi bi-x-circle-fill me-1"></i>OFFLINE</span>';
+                }
+            }
+
+            // Camera Name
+            if (camName && data.camera_name) {
+                camName.textContent = data.camera_name;
+            }
+
+            // Gaze Tracking Status
+            if (gazeStatus) {
+                if (data.face_detected && (data.gaze_valid || data.usable_for_selection)) {
+
+                    gazeStatus.innerHTML =
+                        '<span class="text-success"><i class="bi bi-eye-fill me-1"></i>TRACKING</span>';
+
+                } else if (data.face_detected) {
+
+                    gazeStatus.innerHTML =
+                        '<span class="text-warning"><i class="bi bi-person-check me-1"></i>FACE DETECTED</span>';
+
+                } else if (data.camera_enabled) {
+
+                    gazeStatus.innerHTML =
+                        '<span class="text-secondary"><i class="bi bi-eye-slash me-1"></i>NO FACE</span>';
+
+                } else {
+
+                    gazeStatus.innerHTML =
+                        '<span class="text-secondary"><i class="bi bi-dash-circle me-1"></i>CAMERA OFF</span>';
+
+                }
+            }
+
+        } catch (error) {
+            console.warn("Dashboard telemetry polling error:", error);
+        }
+    }
+
+    // Start polling only when dashboard telemetry elements exist.
+    if (document.getElementById("dashboard-camera-status")) {
+        updateDashboardStatus();
+        setInterval(updateDashboardStatus, 2000);
+    }
+</script>
+{% endblock %}

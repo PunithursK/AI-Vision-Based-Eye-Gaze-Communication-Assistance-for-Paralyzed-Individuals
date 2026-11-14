@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Request History - Caregiver Portal{% endblock %}
+
+{% block content %}
+<div class="container-fluid dashboard-wrapper">
+    <div class="row min-vh-100">
+
+        <!-- Sidebar Navigation -->
+        <aside class="col-lg-2 dashboard-sidebar p-3 d-flex flex-column">
+            <div class="mb-4">
+                <h4 class="text-white mb-0">
+                    <i class="bi bi-eye text-primary me-1"></i>
+                    EyeGaze AI
+                </h4>
+                <small class="text-secondary">
+                    Caregiver Portal
+                </small>
+            </div>
+
+            <nav class="nav flex-column gap-2 mb-auto">
+                <a class="nav-link" href="/caregiver/dashboard">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <a class="nav-link" href="/">
+                    <i class="bi bi-grid"></i>
+                    <span>Patient Communication</span>
+                </a>
+
+                <a class="nav-link" href="/caregiver/settings">
+                    <i class="bi bi-gear"></i>
+                    <span>Settings</span>
+                </a>
+
+                <a class="nav-link active" href="/caregiver/history">
+                    <i class="bi bi-clock-history"></i>
+                    <span>Request History</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer mt-4 pt-3 border-top border-secondary text-secondary small">
+                <div>Alert Recipient:</div>
+                <div class="text-white fw-semibold text-truncate">{{ caregiver_name }}</div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="col-lg-10 p-4 dashboard-main">
+
+            <!-- Top Header & Actions -->
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+                <div>
+                    <h2 class="fw-bold mb-1">Patient Request History</h2>
+                    <p class="text-secondary mb-0">
+                        Authenticated access to all recorded patient communication dispatches.
+                    </p>
+                </div>
+
+                <div class="d-flex gap-2 flex-wrap">
+                    <a href="/api/logs/export" class="btn btn-outline-primary d-inline-flex align-items-center gap-2" download>
+                        <i class="bi bi-download"></i>
+                        <span>Export CSV</span>
+                    </a>
+
+                    <button class="btn btn-outline-warning d-inline-flex align-items-center gap-2" id="btn-page-reset-id" title="RESET REQUEST ID">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                        <span>RESET REQUEST ID</span>
+                    </button>
+
+                    <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" id="btn-page-clear-logs">
+                        <i class="bi bi-trash3"></i>
+                        <span>Clear History</span>
+                    </button>
+
+                    <a href="/caregiver/dashboard" class="btn btn-primary d-inline-flex align-items-center gap-2">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Table Card -->
+            <div class="card dashboard-panel shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-journal-medical text-primary me-2"></i>
+                        Historical Communication Logs
+                    </h5>
+                    <span class="badge text-bg-primary">
+                        Total Records: {{ logs|length }}
+                    </span>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0 align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col">Timestamp</th>
+                                    <th scope="col">Request Block</th>
+                                    <th scope="col">Priority</th>
+                                    <th scope="col">Caregiver Recipient</th>
+                                    <th scope="col">Delivery Status</th>
+                                    <th scope="col">Latency</th>
+                                    <th scope="col">Trigger Source & Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody id="page-history-tbody">
+                                {% if logs %}
+                                    {% for log in logs %}
+                                    <tr>
+                                        <td class="font-monospace small text-secondary">{{ log.timestamp }}</td>
+                                        <td>
+                                            <strong class="text-white">{{ log.block_title }}</strong>
+                                            <div class="small text-secondary">{{ log.category }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if log.priority == 'CRITICAL' %}text-bg-danger{% elif log.priority == 'HIGH' %}text-bg-warning{% else %}text-bg-primary{% endif %}">
+                                                {{ log.priority }}
+                                            </span>
+                                        </td>
+                                        <td class="text-secondary small font-monospace">{{ log.caregiver_email }}</td>
+                                        <td>
+                                            <span class="badge {% if log.status == 'DELIVERED' %}text-bg-success{% elif log.status == 'SIMULATED' %}text-bg-info{% elif log.status in ['PENDING', 'SENDING'] %}text-bg-warning{% else %}text-bg-danger{% endif %}">
+                                                {{ log.status }}
+                                            </span>
+                                        </td>
+                                        <td class="font-monospace small text-secondary">{{ log.delivery_duration_ms }} ms</td>
+                                        <td class="small text-secondary">{{ log.notes or '--' }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="7" class="text-center py-5 text-secondary">
+                                            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                            No patient communication requests recorded yet.
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const btnResetId = document.getElementById('btn-page-reset-id');
+if (btnResetId) {
+    btnResetId.addEventListener('click', async () => {
+        const confirmed = await window.appConfirm({
+            title: "Reset Request ID Counter",
+            message: "This will reset the SQLite request ID counter so the next newly created request starts from ID 1. All existing patient request records will be preserved. (Note: If existing records are present, SQLite prevents duplicate IDs; to restart from ID 1, existing records must be cleared first.)",
+            icon: "bi-arrow-counterclockwise",
+            confirmText: "Reset Request ID",
+            cancelText: "Cancel",
+            confirmVariant: "warning"
+        });
+        if (!confirmed) {
+            return;
+        }
+
+        // Prevent accidental repeated submissions
+        btnResetId.disabled = true;
+        const originalHtml = btnResetId.innerHTML;
+        btnResetId.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span><span>Resetting...</span>';
+
+        try {
+            const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+            const token = match ? match[1] : "";
+            const headers = { "Content-Type": "application/json" };
+            if (token) headers["X-CSRF-Token"] = token;
+
+            const res = await fetch('/api/logs/reset_id', {
+                method: 'POST',
+                headers: headers
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                await window.appAlert(data.message, "Reset Request ID", "bi-check-circle-fill", "success");
+            } else {
+                await window.appAlert(data.error || 'Failed to reset request ID counter.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
+            }
+        } catch (e) {
+            console.error(e);
+            await window.appAlert('Network error occurred while resetting request ID counter.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
+        } finally {
+            btnResetId.disabled = false;
+            btnResetId.innerHTML = originalHtml;
+        }
+    });
+}
+
+document.getElementById('btn-page-clear-logs').addEventListener('click', async () => {
+    const confirmed = await window.appConfirm({
+        title: "Clear Request History",
+        message: "Are you sure you want to permanently clear all patient request history? This action cannot be undone.",
+        icon: "bi-trash3-fill",
+        confirmText: "Clear History",
+        cancelText: "Cancel",
+        confirmVariant: "danger"
+    });
+    if (!confirmed) {
+        return;
+    }
+    try {
+        const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+        const token = match ? match[1] : "";
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers["X-CSRF-Token"] = token;
+
+        const res = await fetch('/api/logs/clear', {
+            method: 'POST',
+            headers: headers
+        });
+        if (res.ok) {
+            window.location.reload();
+        } else {
+            await window.appAlert('Failed to clear request history from database.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
+        }
+    } catch (e) {
+        console.error(e);
+        await window.appAlert('Network error occurred while clearing logs.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
+    }
+});
+</script>
+{% endblock %}
