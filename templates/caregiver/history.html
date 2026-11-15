@@ -9,10 +9,10 @@
         <!-- Sidebar Navigation -->
         <aside class="col-lg-2 dashboard-sidebar p-3 d-flex flex-column">
             <div class="mb-4">
-                <h4 class="text-white mb-0">
+                <h6 class="text-white mb-0">
                     <i class="bi bi-eye text-primary me-1"></i>
-                    EyeGaze AI
-                </h4>
+                    AI-Based Vision Gaze Assistant
+                </h6>
                 <small class="text-secondary">
                     Caregiver Portal
                 </small>
@@ -59,17 +59,20 @@
                 </div>
 
                 <div class="d-flex gap-2 flex-wrap">
-                    <a href="/api/logs/export" class="btn btn-outline-primary d-inline-flex align-items-center gap-2" download>
+                    <a href="/api/logs/export" class="btn btn-outline-primary d-inline-flex align-items-center gap-2"
+                        download>
                         <i class="bi bi-download"></i>
                         <span>Export CSV</span>
                     </a>
 
-                    <button class="btn btn-outline-warning d-inline-flex align-items-center gap-2" id="btn-page-reset-id" title="RESET REQUEST ID">
+                    <button class="btn btn-outline-warning d-inline-flex align-items-center gap-2"
+                        id="btn-page-reset-id" title="RESET REQUEST ID">
                         <i class="bi bi-arrow-counterclockwise"></i>
                         <span>RESET REQUEST ID</span>
                     </button>
 
-                    <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2" id="btn-page-clear-logs">
+                    <button class="btn btn-outline-danger d-inline-flex align-items-center gap-2"
+                        id="btn-page-clear-logs">
                         <i class="bi bi-trash3"></i>
                         <span>Clear History</span>
                     </button>
@@ -109,35 +112,38 @@
                             </thead>
                             <tbody id="page-history-tbody">
                                 {% if logs %}
-                                    {% for log in logs %}
-                                    <tr>
-                                        <td class="font-monospace small text-secondary">{{ log.timestamp }}</td>
-                                        <td>
-                                            <strong class="text-white">{{ log.block_title }}</strong>
-                                            <div class="small text-secondary">{{ log.category }}</div>
-                                        </td>
-                                        <td>
-                                            <span class="badge {% if log.priority == 'CRITICAL' %}text-bg-danger{% elif log.priority == 'HIGH' %}text-bg-warning{% else %}text-bg-primary{% endif %}">
-                                                {{ log.priority }}
-                                            </span>
-                                        </td>
-                                        <td class="text-secondary small font-monospace">{{ log.caregiver_email }}</td>
-                                        <td>
-                                            <span class="badge {% if log.status == 'DELIVERED' %}text-bg-success{% elif log.status == 'SIMULATED' %}text-bg-info{% elif log.status in ['PENDING', 'SENDING'] %}text-bg-warning{% else %}text-bg-danger{% endif %}">
-                                                {{ log.status }}
-                                            </span>
-                                        </td>
-                                        <td class="font-monospace small text-secondary">{{ log.delivery_duration_ms }} ms</td>
-                                        <td class="small text-secondary">{{ log.notes or '--' }}</td>
-                                    </tr>
-                                    {% endfor %}
+                                {% for log in logs %}
+                                <tr>
+                                    <td class="font-monospace small text-secondary">{{ log.timestamp }}</td>
+                                    <td>
+                                        <strong class="text-white">{{ log.block_title }}</strong>
+                                        <div class="small text-secondary">{{ log.category }}</div>
+                                    </td>
+                                    <td>
+                                        <span
+                                            class="badge {% if log.priority == 'CRITICAL' %}text-bg-danger{% elif log.priority == 'HIGH' %}text-bg-warning{% else %}text-bg-primary{% endif %}">
+                                            {{ log.priority }}
+                                        </span>
+                                    </td>
+                                    <td class="text-secondary small font-monospace">{{ log.caregiver_email }}</td>
+                                    <td>
+                                        <span
+                                            class="badge {% if log.status == 'DELIVERED' %}text-bg-success{% elif log.status == 'SIMULATED' %}text-bg-info{% elif log.status in ['PENDING', 'SENDING'] %}text-bg-warning{% else %}text-bg-danger{% endif %}">
+                                            {{ log.status }}
+                                        </span>
+                                    </td>
+                                    <td class="font-monospace small text-secondary">{{ log.delivery_duration_ms }} ms
+                                    </td>
+                                    <td class="small text-secondary">{{ log.notes or '--' }}</td>
+                                </tr>
+                                {% endfor %}
                                 {% else %}
-                                    <tr>
-                                        <td colspan="7" class="text-center py-5 text-secondary">
-                                            <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
-                                            No patient communication requests recorded yet.
-                                        </td>
-                                    </tr>
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-secondary">
+                                        <i class="bi bi-inbox fs-1 d-block mb-2 text-secondary opacity-50"></i>
+                                        No patient communication requests recorded yet.
+                                    </td>
+                                </tr>
                                 {% endif %}
                             </tbody>
                         </table>
@@ -152,83 +158,83 @@
 
 {% block scripts %}
 <script>
-const btnResetId = document.getElementById('btn-page-reset-id');
-if (btnResetId) {
-    btnResetId.addEventListener('click', async () => {
+    const btnResetId = document.getElementById('btn-page-reset-id');
+    if (btnResetId) {
+        btnResetId.addEventListener('click', async () => {
+            const confirmed = await window.appConfirm({
+                title: "Reset Request ID Counter",
+                message: "This will reset the SQLite request ID counter so the next newly created request starts from ID 1. All existing patient request records will be preserved. (Note: If existing records are present, SQLite prevents duplicate IDs; to restart from ID 1, existing records must be cleared first.)",
+                icon: "bi-arrow-counterclockwise",
+                confirmText: "Reset Request ID",
+                cancelText: "Cancel",
+                confirmVariant: "warning"
+            });
+            if (!confirmed) {
+                return;
+            }
+
+            // Prevent accidental repeated submissions
+            btnResetId.disabled = true;
+            const originalHtml = btnResetId.innerHTML;
+            btnResetId.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span><span>Resetting...</span>';
+
+            try {
+                const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
+                const token = match ? match[1] : "";
+                const headers = { "Content-Type": "application/json" };
+                if (token) headers["X-CSRF-Token"] = token;
+
+                const res = await fetch('/api/logs/reset_id', {
+                    method: 'POST',
+                    headers: headers
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    await window.appAlert(data.message, "Reset Request ID", "bi-check-circle-fill", "success");
+                } else {
+                    await window.appAlert(data.error || 'Failed to reset request ID counter.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
+                }
+            } catch (e) {
+                console.error(e);
+                await window.appAlert('Network error occurred while resetting request ID counter.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
+            } finally {
+                btnResetId.disabled = false;
+                btnResetId.innerHTML = originalHtml;
+            }
+        });
+    }
+
+    document.getElementById('btn-page-clear-logs').addEventListener('click', async () => {
         const confirmed = await window.appConfirm({
-            title: "Reset Request ID Counter",
-            message: "This will reset the SQLite request ID counter so the next newly created request starts from ID 1. All existing patient request records will be preserved. (Note: If existing records are present, SQLite prevents duplicate IDs; to restart from ID 1, existing records must be cleared first.)",
-            icon: "bi-arrow-counterclockwise",
-            confirmText: "Reset Request ID",
+            title: "Clear Request History",
+            message: "Are you sure you want to permanently clear all patient request history? This action cannot be undone.",
+            icon: "bi-trash3-fill",
+            confirmText: "Clear History",
             cancelText: "Cancel",
-            confirmVariant: "warning"
+            confirmVariant: "danger"
         });
         if (!confirmed) {
             return;
         }
-
-        // Prevent accidental repeated submissions
-        btnResetId.disabled = true;
-        const originalHtml = btnResetId.innerHTML;
-        btnResetId.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span><span>Resetting...</span>';
-
         try {
             const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
             const token = match ? match[1] : "";
             const headers = { "Content-Type": "application/json" };
             if (token) headers["X-CSRF-Token"] = token;
 
-            const res = await fetch('/api/logs/reset_id', {
+            const res = await fetch('/api/logs/clear', {
                 method: 'POST',
                 headers: headers
             });
-            const data = await res.json();
-            if (res.ok && data.success) {
-                await window.appAlert(data.message, "Reset Request ID", "bi-check-circle-fill", "success");
+            if (res.ok) {
+                window.location.reload();
             } else {
-                await window.appAlert(data.error || 'Failed to reset request ID counter.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
+                await window.appAlert('Failed to clear request history from database.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
             }
         } catch (e) {
             console.error(e);
-            await window.appAlert('Network error occurred while resetting request ID counter.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
-        } finally {
-            btnResetId.disabled = false;
-            btnResetId.innerHTML = originalHtml;
+            await window.appAlert('Network error occurred while clearing logs.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
         }
     });
-}
-
-document.getElementById('btn-page-clear-logs').addEventListener('click', async () => {
-    const confirmed = await window.appConfirm({
-        title: "Clear Request History",
-        message: "Are you sure you want to permanently clear all patient request history? This action cannot be undone.",
-        icon: "bi-trash3-fill",
-        confirmText: "Clear History",
-        cancelText: "Cancel",
-        confirmVariant: "danger"
-    });
-    if (!confirmed) {
-        return;
-    }
-    try {
-        const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
-        const token = match ? match[1] : "";
-        const headers = { "Content-Type": "application/json" };
-        if (token) headers["X-CSRF-Token"] = token;
-
-        const res = await fetch('/api/logs/clear', {
-            method: 'POST',
-            headers: headers
-        });
-        if (res.ok) {
-            window.location.reload();
-        } else {
-            await window.appAlert('Failed to clear request history from database.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
-        }
-    } catch (e) {
-        console.error(e);
-        await window.appAlert('Network error occurred while clearing logs.', 'Error', 'bi-exclamation-triangle-fill', 'danger');
-    }
-});
 </script>
 {% endblock %}
