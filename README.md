@@ -4,7 +4,7 @@
 
 ---
 
-##1. Project Synopsis & Motivation
+## 📌 1. Project Synopsis & Motivation
 
 Paralyzed individuals who cannot speak or use their hands often face severe difficulty expressing their basic physiological needs, acute pain, and critical emergencies. Traditional assistive communication technologies often require physical contact, calibrate through arduous calibration routines that cause eye fatigue, or fail whenever the patient slightly shifts posture in bed or a wheelchair.
 
@@ -18,7 +18,7 @@ Paralyzed individuals who cannot speak or use their hands often face severe diff
 
 ---
 
-##2. System Architecture
+## 🏗️ 2. System Architecture
 
 ```mermaid
 graph TD
@@ -49,7 +49,7 @@ graph TD
 
 ---
 
-##3. The 4 Communication Blocks
+## 🧩 3. The 4 Communication Blocks
 
 | Block # | Title | Icon | Category | Priority | Accent Color | Automated Caregiver Message |
 | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
@@ -60,7 +60,7 @@ graph TD
 
 ---
 
-##4. Vision Engine & 5-Point Calibration
+## 🔬 4. Vision Engine & 5-Point Calibration
 
 ### Mandatory Both-Eye Tracking Architecture:
 - Tracks left and right eyes independently with subpixel iris refinement and radial-symmetry gradient scoring.
@@ -72,7 +72,7 @@ graph TD
 
 ---
 
-##5. Strict Lockout Protocol & Watchdog
+## 🔒 5. Strict Lockout Protocol & Watchdog
 
 1. **Fixation Detection**: When gaze lands inside any block, a radial countdown ring animates over the configured dwell time.
 2. **Lock Engagement**:
@@ -84,7 +84,7 @@ graph TD
 
 ---
 
-##6. Quick Start & Execution
+## 🚀 6. Quick Start & Execution
 
 ### Prerequisites
 - Python 3.10+ (Verified on Python 3.14)
@@ -105,7 +105,7 @@ python main.py
 
 ---
 
-##7. Caregiver Portal & Email Configuration
+## ⚙️ 7. Caregiver Portal & Email Configuration
 
 Access the Caregiver Portal via the **Dashboard**, **Settings**, or **History** links in the top navigation:
 - **Simulation Mode (Default)**: Safely simulates email dispatch locally so you can test without entering API keys.
@@ -114,7 +114,7 @@ Access the Caregiver Portal via the **Dashboard**, **Settings**, or **History** 
 
 ---
 
-##8. Database, Audit Logs & Testing
+## 📊 8. Database, Audit Logs & Testing
 
 - **SQLite Database (`paralyzed_assistance.db`)**: Permanently records all request logs, delivery latencies, and system configuration.
 - **History & CSV Export**: View full historical logs in `/caregiver/history` or click **Export CSV**.
@@ -126,7 +126,7 @@ Access the Caregiver Portal via the **Dashboard**, **Settings**, or **History** 
 
 ---
 
-##9. Keyboard Hotkeys (1–4) & Camera Controls
+## 🔢 9. Keyboard Hotkeys (1–4) & Camera Controls
 
 When the camera is disabled or physical input is preferred:
 - **1**: Food

@@ -1519,7 +1519,7 @@ class AIVisionEngine:
             "face_detected": False,
             "camera_enabled": False,
             "camera_index": 0,
-            "camera_name": "Initializing...",
+            "camera_name": "Camera Off (Click to activate)",
             "mirror_view": True,
             "external_camera_detected": False,
             "gaze_x": 0.5,
@@ -1530,13 +1530,13 @@ class AIVisionEngine:
             "both_eyes_valid": False,
             "is_blinking": False,
             "camera_available": False,
-            "status": "Initializing...",
+            "status": "Camera Off - Keyboard Controls Active (Keys 1-4)",
             "raw_gaze_x": 0.5,
             "raw_gaze_y": 0.5,
             "gaze_valid": False,
             "usable_for_selection": False,
             "stale_prediction": False,
-            "invalid_reason": "Initializing...",
+            "invalid_reason": "Camera hardware is turned off",
             "frame_timestamp": time.time(),
             "eye_mode": "both",
             "last_error": None,
@@ -1630,6 +1630,8 @@ class AIVisionEngine:
         self._last_video_timestamp_ms = 0
         self.is_shutting_down = False
         self._init_landmarker()
+        # Initialize placeholder "Camera Off" frame so stream is ready before camera is started
+        self._generate_camera_off_frame()
 
     @property
     def is_running(self) -> bool:

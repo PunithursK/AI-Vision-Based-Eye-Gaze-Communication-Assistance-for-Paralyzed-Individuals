@@ -1,0 +1,1071 @@
+{% extends "base.html" %}
+
+{% block title %}AI-Vision Communication Assistance for Paralyzed Individuals — Home{% endblock %}
+
+{% block head %}
+<style>
+  /* =====================================================================
+     HOME PAGE STYLES — Full-Width Modern Dark Theme Layout
+     Reuses existing dark theme variables from style.css
+  ===================================================================== */
+  html, body {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  .home-page {
+    background: #0a0c10;
+    color: #e2e8f0;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* ----- Navbar ----- */
+  .home-navbar {
+    background: rgba(10, 12, 16, 0.96);
+    border-bottom: 1px solid #1e222a;
+    padding: 0.85rem clamp(1.25rem, 3vw, 3rem);
+    position: sticky;
+    top: 0;
+    z-index: 1050;
+    backdrop-filter: blur(8px);
+    width: 100%;
+  }
+
+  .home-navbar .brand {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .home-navbar .brand .brand-eye {
+    color: #3b82f6;
+    font-size: 1.6rem;
+  }
+
+  .home-nav-link {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.45rem 0.9rem;
+    border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+    display: inline-flex;
+    align-items: center;
+  }
+  .home-nav-link:hover, .home-nav-link.active {
+    color: #fff;
+    background: #1e222a;
+  }
+
+  /* ----- Hero Section ----- */
+  .hero-section {
+    padding: clamp(3rem, 5vw, 5rem) clamp(1.25rem, 4vw, 4rem) 3.5rem;
+    text-align: center;
+    background: linear-gradient(165deg, #0d121c 0%, #0f172a 45%, #080a0e 100%);
+    border-bottom: 1px solid #1e222a;
+    width: 100%;
+    position: relative;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(59,130,246,0.12);
+    border: 1px solid rgba(59,130,246,0.3);
+    color: #60a5fa;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.35rem 1.1rem;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: clamp(2rem, 4.5vw, 3.4rem);
+    line-height: 1.2;
+    color: #fff;
+    max-width: 1100px;
+    margin: 0 auto 1.35rem;
+  }
+
+  .hero-title .accent { color: #3b82f6; }
+
+  .hero-sub {
+    font-size: clamp(1rem, 1.3vw, 1.15rem);
+    color: #94a3b8;
+    max-width: 860px;
+    margin: 0 auto 2.25rem;
+    line-height: 1.7;
+  }
+
+  .hero-cta-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 3rem;
+  }
+
+  .btn-hero-primary {
+    background: #3b82f6;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1.85rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(59,130,246,0.35);
+  }
+  .btn-hero-primary:hover {
+    background: #2563eb;
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(59,130,246,0.45);
+  }
+
+  .btn-hero-outline {
+    background: transparent;
+    color: #cbd5e1;
+    border: 1px solid #334155;
+    padding: 0.75rem 1.85rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 1rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+  }
+  .btn-hero-outline:hover {
+    color: #fff;
+    border-color: #64748b;
+    background: rgba(255,255,255,0.03);
+  }
+
+  /* ----- Hero Metric Stats Bar ----- */
+  .hero-stats-row {
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .hero-stat-card {
+    background: rgba(13, 17, 23, 0.7);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .hero-stat-icon {
+    font-size: 1.85rem;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .hero-stat-val {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 0.2rem;
+  }
+
+  .hero-stat-desc {
+    color: #64748b;
+    font-size: 0.8rem;
+    margin: 0;
+  }
+
+  /* ----- Section base (Full Width) ----- */
+  .home-section {
+    padding: clamp(3rem, 5vw, 4.5rem) clamp(1.25rem, 4vw, 4rem);
+    width: 100%;
+    margin: 0;
+  }
+
+  .section-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    color: #fff;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-desc {
+    color: #94a3b8;
+    font-size: 1rem;
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+  }
+
+  /* ----- Problem cards ----- */
+  .problem-card {
+    background: #0d1117;
+    border: 1px solid #1e222a;
+    border-radius: 14px;
+    padding: 1.6rem;
+    height: 100%;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .problem-card:hover {
+    border-color: #334155;
+    transform: translateY(-2px);
+  }
+
+  .problem-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .problem-card h5 {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #e2e8f0;
+    margin-bottom: 0.5rem;
+  }
+
+  .problem-card p {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.65;
+  }
+
+  /* ----- How it works steps (Grid) ----- */
+  .step-card {
+    background: #0d1117;
+    border: 1px solid #1e222a;
+    border-radius: 14px;
+    padding: 1.6rem;
+    display: flex;
+    gap: 1.2rem;
+    align-items: flex-start;
+    height: 100%;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .step-card:hover {
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+  }
+
+  .step-number {
+    min-width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: #1e3a5f;
+    border: 2px solid #3b82f6;
+    color: #60a5fa;
+    font-size: 0.95rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .step-card h5 {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #e2e8f0;
+    margin-bottom: 0.4rem;
+  }
+
+  .step-card p {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.65;
+  }
+
+  /* ----- Feature cards ----- */
+  .feature-card {
+    background: #0d1117;
+    border: 1px solid #1e222a;
+    border-radius: 14px;
+    padding: 1.8rem;
+    height: 100%;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+  .feature-card:hover {
+    border-color: #3b82f6;
+    transform: translateY(-3px);
+  }
+
+  .feature-icon {
+    font-size: 2rem;
+    margin-bottom: 1.1rem;
+    display: block;
+  }
+
+  .feature-card h5 {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-card p {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin: 0;
+    line-height: 1.65;
+  }
+
+  /* ----- Usage Guide Cards (Full Width Grid) ----- */
+  .guide-card {
+    background: #0d1117;
+    border: 1px solid #1e222a;
+    border-radius: 14px;
+    padding: 1.6rem;
+    height: 100%;
+    transition: border-color 0.2s;
+  }
+  .guide-card:hover { border-color: #3b82f6; }
+
+  .guide-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .guide-card-header h5 {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #e2e8f0;
+    margin: 0;
+  }
+
+  .guide-card-body {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .guide-card-body ul {
+    margin: 0.5rem 0 1rem;
+    padding-left: 1.25rem;
+  }
+
+  .guide-card-body ul li {
+    margin-bottom: 0.4rem;
+  }
+
+  /* ----- Info & Warning Boxes ----- */
+  .info-box {
+    background: rgba(59,130,246,0.08);
+    border: 1px solid rgba(59,130,246,0.25);
+    border-radius: 10px;
+    padding: 1rem 1.25rem;
+    color: #93c5fd;
+    font-size: 0.875rem;
+    line-height: 1.6;
+  }
+
+  .warning-box {
+    background: rgba(245,158,11,0.08);
+    border: 1px solid rgba(245,158,11,0.25);
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    color: #fcd34d;
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  /* ----- Footer ----- */
+  .home-footer {
+    border-top: 1px solid #1e222a;
+    padding: 2.5rem clamp(1.25rem, 4vw, 4rem);
+    text-align: center;
+    color: #475569;
+    font-size: 0.85rem;
+    background: #080a0e;
+    width: 100%;
+  }
+
+  /* ----- Section separator ----- */
+  .home-divider {
+    border: none;
+    border-top: 1px solid #1e222a;
+    margin: 0;
+  }
+
+  /* ----- Camera status badge ----- */
+  .camera-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #f87171;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.28rem 0.75rem;
+    border-radius: 100px;
+  }
+  .camera-status-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #f87171;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="home-page">
+
+  <!-- ========================================================
+       TOP NAVBAR (Full Width)
+  ======================================================== -->
+  <nav class="home-navbar d-flex align-items-center justify-content-between flex-wrap gap-2">
+    <a href="/home" class="brand">
+      <i class="bi bi-eye-fill brand-eye"></i>
+      <span>AI Vision Assistant</span>
+    </a>
+
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+      <a href="/home" class="home-nav-link active">
+        <i class="bi bi-house me-1"></i>Home
+      </a>
+      <a href="/patient" class="home-nav-link">
+        <i class="bi bi-grid me-1"></i>Patient Interface
+      </a>
+      <a href="/caregiver/dashboard" class="home-nav-link">
+        <i class="bi bi-speedometer2 me-1"></i>Dashboard
+      </a>
+      <a href="/caregiver/settings" class="home-nav-link">
+        <i class="bi bi-gear me-1"></i>Settings
+      </a>
+      <span class="ms-2 camera-status-badge" title="Webcam is kept OFF at startup for privacy and safety">
+        <span class="dot"></span>Camera OFF by Default
+      </span>
+    </div>
+  </nav>
+
+  <!-- ========================================================
+       HERO SECTION (Full Width with Metrics Banner)
+  ======================================================== -->
+  <section class="hero-section">
+    <div class="hero-badge">
+      <i class="bi bi-eye-fill"></i>
+      AI-Vision-Based Communication Assistance for Paralyzed Individuals
+    </div>
+
+    <h1 class="hero-title">
+      Giving an Instant <span class="accent">Voice</span> to<br>
+      Individuals with Severe Paralysis
+    </h1>
+
+    <p class="hero-sub">
+      A touchless, real-time eye-gaze and head-movement assistive platform empowering
+      patients with ALS, locked-in syndrome, brainstem stroke, or quadriplegia to communicate
+      essential medical and daily needs using only their natural eye gaze.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="/patient" class="btn-hero-primary">
+        <i class="bi bi-display"></i>
+        Open Patient Interface
+      </a>
+      <a href="/caregiver/dashboard" class="btn-hero-outline">
+        <i class="bi bi-speedometer2"></i>
+        Open Caregiver Dashboard
+      </a>
+      <a href="#how-to-use" class="btn-hero-outline">
+        <i class="bi bi-book"></i>
+        User Instructions
+      </a>
+    </div>
+
+    <!-- Full-Width Stats Highlight Bar -->
+    <div class="hero-stats-row">
+      <div class="hero-stat-card">
+        <div class="hero-stat-icon" style="background:rgba(59,130,246,0.12); color:#60a5fa;">
+          <i class="bi bi-eye"></i>
+        </div>
+        <div>
+          <div class="hero-stat-val">100% Touchless</div>
+          <p class="hero-stat-desc">Operated purely by eye gaze and head orientation</p>
+        </div>
+      </div>
+
+      <div class="hero-stat-card">
+        <div class="hero-stat-icon" style="background:rgba(16,185,129,0.12); color:#34d399;">
+          <i class="bi bi-cpu"></i>
+        </div>
+        <div>
+          <div class="hero-stat-val">MediaPipe 3D AI</div>
+          <p class="hero-stat-desc">478 landmarks with subpixel dual-iris localization</p>
+        </div>
+      </div>
+
+      <div class="hero-stat-card">
+        <div class="hero-stat-icon" style="background:rgba(245,158,11,0.12); color:#fbbf24;">
+          <i class="bi bi-lightning-charge"></i>
+        </div>
+        <div>
+          <div class="hero-stat-val">Real-Time ~30 FPS</div>
+          <p class="hero-stat-desc">Low latency with 1-Euro adaptive anti-jitter filtering</p>
+        </div>
+      </div>
+
+      <div class="hero-stat-card">
+        <div class="hero-stat-icon" style="background:rgba(239,68,68,0.12); color:#f87171;">
+          <i class="bi bi-shield-lock"></i>
+        </div>
+        <div>
+          <div class="hero-stat-val">Privacy Protected</div>
+          <p class="hero-stat-desc">Camera strictly OFF by default; processed 100% locally</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="home-divider">
+
+  <!-- ========================================================
+       SECTION 1 — ABOUT & WHY DEVELOPED (Full Width)
+  ======================================================== -->
+  <section class="home-section">
+    <div class="row g-5 align-items-center">
+      <div class="col-lg-5">
+        <div class="section-label">Project Background & Purpose</div>
+        <h2 class="section-title">Why This Project Was Developed</h2>
+        <p class="section-desc">
+          Severe neurological conditions — including Amyotrophic Lateral Sclerosis (ALS),
+          brainstem stroke, locked-in syndrome, and high-level spinal cord injuries — often strip
+          individuals of all voluntary muscle movement and vocal ability. Yet, their cognitive
+          faculties, thoughts, emotions, and consciousness remain fully intact.
+        </p>
+        <p class="section-desc">
+          In medical and homecare settings, patients find themselves completely isolated: unable to
+          verbally express pain, call for urgent help, request water or food, or indicate that
+          medication is due. Traditional augmentative communication devices cost thousands of dollars,
+          rely on bulky, invasive sensors, or require motor skills that patients simply do not have.
+        </p>
+        <p class="section-desc">
+          <strong>This system was developed to provide an accessible, low-cost, software-driven lifeline:</strong>
+          using an ordinary webcam, computer vision, and machine learning, it translates natural eye gaze
+          dwell and subtle head movements into immediate caregiver dispatches.
+        </p>
+        <div class="d-flex gap-2 flex-wrap mt-3">
+          <span class="badge text-bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25 py-2 px-3">Non-Invasive</span>
+          <span class="badge text-bg-success bg-opacity-25 text-success border border-success border-opacity-25 py-2 px-3">Standard Webcam</span>
+          <span class="badge text-bg-info bg-opacity-25 text-info border border-info border-opacity-25 py-2 px-3">On-Device ML</span>
+        </div>
+      </div>
+
+      <div class="col-lg-7">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <div class="problem-card">
+              <div class="problem-icon" style="background:rgba(239,68,68,0.12); color:#f87171;">
+                <i class="bi bi-person-x-fill"></i>
+              </div>
+              <h5>Total Motor & Speech Paralysis</h5>
+              <p>Patients with locked-in syndrome or advanced ALS cannot articulate speech or control hand switches, rendering conventional nurse-call buttons useless.</p>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="problem-card">
+              <div class="problem-icon" style="background:rgba(245,158,11,0.12); color:#fbbf24;">
+                <i class="bi bi-chat-square-x-fill"></i>
+              </div>
+              <h5>Uncommunicated Vital Needs</h5>
+              <p>Critical requests such as emergency assistance, severe pain, suffocation, hydration, and medication are delayed or missed when caregivers are outside the room.</p>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="problem-card">
+              <div class="problem-icon" style="background:rgba(139,92,246,0.12); color:#a78bfa;">
+                <i class="bi bi-currency-dollar"></i>
+              </div>
+              <h5>Cost Barrier of Proprietary Hardware</h5>
+              <p>Commercial eye-trackers frequently cost $5,000–$15,000, creating an insurmountable financial barrier for families and overburdened healthcare facilities.</p>
+            </div>
+          </div>
+
+          <div class="col-md-6">
+            <div class="problem-card">
+              <div class="problem-icon" style="background:rgba(16,185,129,0.12); color:#34d399;">
+                <i class="bi bi-heart-pulse-fill"></i>
+              </div>
+              <h5>Preserving Patient Dignity & Autonomy</h5>
+              <p>Enabling touchless communication restores autonomy, diminishes psychological isolation, and empowers patients to interact with their environment independently.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="home-divider">
+
+  <!-- ========================================================
+       SECTION 2 — HOW THE SYSTEM WORKS (Full Width 3x2 Grid)
+  ======================================================== -->
+  <section class="home-section">
+    <div class="mb-4">
+      <div class="section-label">End-to-End Architecture</div>
+      <h2 class="section-title">How the System Works Step by Step</h2>
+      <p class="section-desc">
+        The application operates as a real-time computer vision pipeline, linking MediaPipe FaceMesh,
+        dual-iris geometry, head-pose estimation, adaptive filtering, and caregiver alert dispatchers.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-xl-4 col-md-6">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <div>
+            <h5>Manual Camera Activation</h5>
+            <p>To respect patient privacy, the webcam remains strictly OFF at launch. The caregiver or user clicks "Turn On Camera" in System Controls to initialize the DirectShow video stream at 30 FPS.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <div>
+            <h5>3D Face & Dual Iris Tracking</h5>
+            <p>MediaPipe FaceLandmarker detects 478 3D landmarks in real time. Subpixel iris localization calculates canthal distances, eye aspect ratios (EAR), and detects micro-blinks to avoid false triggers.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <div>
+            <h5>3D Head Pose Fusion</h5>
+            <p>Perspective-n-Point (PnP) solves for head yaw, pitch, and roll in real-time. Head movements and dual-iris gaze displacements are adaptively fused to eliminate gaze drift and accommodate natural posture.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <div>
+            <h5>Trained Gaze Calibration</h5>
+            <p>A 5-point calibration protocol evaluates candidate machine learning models (Ridge, SVR, Random Forest, Affine Standard) with 4-fold cross-validation, mapping eye vectors to true screen coordinates.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="step-card">
+          <div class="step-number">5</div>
+          <div>
+            <h5>Adaptive 1-Euro Dwell Selection</h5>
+            <p>Gaze trajectories pass through 1-Euro adaptive low-pass filters. When the gaze cursor dwells inside an option card for the configured dwell duration (default 3.0s), the card confirms with audio feedback.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="step-card">
+          <div class="step-number">6</div>
+          <div>
+            <h5>Instant Caregiver Dispatch & Lockout</h5>
+            <p>Upon confirmation, a transactional email is immediately dispatched via Brevo REST API / SMTP to the caregiver, logged in SQLite, and a safety lockout window starts to avoid double-triggering.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="home-divider">
+
+  <!-- ========================================================
+       SECTION 3 — HOW TO USE THE APPLICATION (Full Width Grid)
+  ======================================================== -->
+  <section class="home-section" id="how-to-use">
+    <div class="mb-4">
+      <div class="section-label">Operator & Caregiver Guide</div>
+      <h2 class="section-title">How to Use the Application</h2>
+      <p class="section-desc">
+        Complete step-by-step operating instructions for patients, caregivers, and clinical assistants.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <!-- Card 1 -->
+      <div class="col-lg-4 col-md-6">
+        <div class="guide-card">
+          <div class="guide-card-header">
+            <span style="color:#ef4444; font-size:1.4rem;"><i class="bi bi-camera-video-off-fill"></i></span>
+            <h5>1. Camera Activation (OFF by Default)</h5>
+          </div>
+          <div class="guide-card-body">
+            <p>The webcam is <strong>strictly OFF by default</strong> whenever the application starts, preserving privacy and resources:</p>
+            <ul>
+              <li>Navigate to the <strong>Patient Interface</strong> (`/patient`).</li>
+              <li>Click the <strong>"System Controls"</strong> button in the top navigation bar.</li>
+              <li>Click the red <strong>"Turn On Camera"</strong> button to open the hardware.</li>
+              <li>Select between <strong>System Camera (0)</strong> and <strong>External USB Camera (1)</strong> if multiple devices are attached.</li>
+              <li>Toggle <strong>Mirror: ON/OFF</strong> depending on whether the patient prefers mirrored interaction.</li>
+            </ul>
+            <div class="info-box">
+              <i class="bi bi-info-circle me-1"></i>
+              When camera is OFF, touchless keyboard backup keys (1–4) remain permanently active.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2 -->
+      <div class="col-lg-4 col-md-6">
+        <div class="guide-card">
+          <div class="guide-card-header">
+            <span style="color:#3b82f6; font-size:1.4rem;"><i class="bi bi-bullseye"></i></span>
+            <h5>2. Eye Gaze Calibration</h5>
+          </div>
+          <div class="guide-card-body">
+            <p>Calibration aligns the AI vision model with the patient's individual eye anatomy and seating position:</p>
+            <ul>
+              <li>In the System Controls dropdown, click <strong>"Calibrate"</strong>.</li>
+              <li>Five target boxes appear sequentially: <strong>Top-Right, Top-Left, Bottom-Right, Bottom-Left, Center</strong>.</li>
+              <li>Instruct the patient to focus steadily on each box for <strong>1.5 seconds</strong> until it turns green and advances.</li>
+              <li>The system executes 4-fold cross-validation across all 5 points and trains Ridge/Affine models.</li>
+              <li>Calculated metrics (Error MAE, Hit Rate) are saved directly into the SQLite database.</li>
+            </ul>
+            <div class="info-box">
+              <i class="bi bi-check-circle me-1"></i>
+              Calibration profiles expire after 24 hours to account for daily lighting and positional changes.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 3 -->
+      <div class="col-lg-4 col-md-6">
+        <div class="guide-card">
+          <div class="guide-card-header">
+            <span style="color:#10b981; font-size:1.4rem;"><i class="bi bi-grid-fill"></i></span>
+            <h5>3. Selecting Communication Cards</h5>
+          </div>
+          <div class="guide-card-body">
+            <p>Four primary high-contrast request cards are arranged in an accessible 2x2 grid:</p>
+            <ul>
+              <li><strong>Food (Top-Left):</strong> Meal, hunger, or feeding assistance.</li>
+              <li><strong>Water (Top-Right):</strong> Hydration, drink, or dry mouth.</li>
+              <li><strong>Medicine (Bottom-Left):</strong> Pain medication or scheduled dosage.</li>
+              <li><strong>Help (Bottom-Right):</strong> Urgent caregiver assistance or discomfort.</li>
+            </ul>
+            <p>The patient simply fixes their gaze on the desired card. A circular progress ring animates continuously. Reaching 100% triggers confirmation.</p>
+            <div class="info-box">
+              <i class="bi bi-clock me-1"></i>
+              Configured dwell time (default: 3.0s) can be customized in Settings (1.5s to 5.0s).
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4 -->
+      <div class="col-lg-4 col-md-6">
+        <div class="guide-card">
+          <div class="guide-card-header">
+            <span style="color:#f59e0b; font-size:1.4rem;"><i class="bi bi-bell-fill"></i></span>
+            <h5>4. Caregiver Notification Workflow</h5>
+          </div>
+          <div class="guide-card-body">
+            <p>When a selection is completed by gaze or keyboard:</p>
+            <ul>
+              <li>An audible audio chime confirms selection to the patient.</li>
+              <li>A high-priority alert email is instantly dispatched via Brevo REST API / SMTP.</li>
+              <li>The email specifies patient name, room number, timestamp, and request category.</li>
+              <li>The screen enters a 60-second safety lockout to reassure the patient while preventing duplicate spam.</li>
+              <li>Caregivers can force-unlock anytime from the interface using the "Unlock" button.</li>
+            </ul>
+            <div class="info-box">
+              <i class="bi bi-shield-check me-1"></i>
+              Simulation mode is available for offline testing without consuming email credits.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 5 -->
+      <div class="col-lg-4 col-md-6">
+        <div class="guide-card">
+          <div class="guide-card-header">
+            <span style="color:#06b6d4; font-size:1.4rem;"><i class="bi bi-speedometer2"></i></span>
+            <h5>5. Caregiver Dashboard & Analytics</h5>
+          </div>
+          <div class="guide-card-body">
+            <p>The dedicated Caregiver Portal (`/caregiver/dashboard`) provides real-time oversight:</p>
+            <ul>
+              <li><strong>AI Vision & Calibration Results:</strong> Live status, active model, sample count, calibration MAE error, and validation hit rate.</li>
+              <li><strong>Live Hardware Status:</strong> Instantaneous camera power, FPS, face detection, and gaze validity.</li>
+              <li><strong>Request History Log:</strong> Chronological log of all dispatches with CSV export.</li>
+              <li><strong>Settings:</strong> Edit caregiver email, Brevo API key, dwell time, and sensitivity.</li>
+            </ul>
+            <div class="info-box">
+              <i class="bi bi-arrow-repeat me-1"></i>
+              Calibration results update automatically every 10 seconds via background polling.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 6 -->
+      <div class="col-lg-4 col-md-6">
+        <div class="guide-card">
+          <div class="guide-card-header">
+            <span style="color:#8b5cf6; font-size:1.4rem;"><i class="bi bi-keyboard-fill"></i></span>
+            <h5>6. Emergency Touchless Keyboard Backup</h5>
+          </div>
+          <div class="guide-card-body">
+            <p>If camera hardware fails or the patient is fatigued:</p>
+            <ul>
+              <li>Press <strong>Key 1:</strong> Triggers Food request immediately.</li>
+              <li>Press <strong>Key 2:</strong> Triggers Water request immediately.</li>
+              <li>Press <strong>Key 3:</strong> Triggers Medicine request immediately.</li>
+              <li>Press <strong>Key 4:</strong> Triggers Emergency Help immediately.</li>
+              <li>Press <strong>Key R:</strong> Re-centers baseline gaze resting state.</li>
+              <li>Press <strong>Key C:</strong> Launches 5-point calibration immediately.</li>
+            </ul>
+            <div class="info-box">
+              <i class="bi bi-laptop me-1"></i>
+              Keyboard inputs execute full email dispatch and database logging identically to gaze dwell.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="home-divider">
+
+  <!-- ========================================================
+       SECTION 4 — KEY SYSTEM CAPABILITIES (Full Width 6-Card Grid)
+  ======================================================== -->
+  <section class="home-section">
+    <div class="mb-4">
+      <div class="section-label">Core Capabilities</div>
+      <h2 class="section-title">Technical Features & Engineering Highlights</h2>
+      <p class="section-desc">
+        Engineered specifically for clinical reliability, low latency, and maximum patient comfort.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-xl-4 col-md-6">
+        <div class="feature-card">
+          <span class="feature-icon text-primary"><i class="bi bi-eye-fill"></i></span>
+          <h5>Mandatory Both-Eye Tracking</h5>
+          <p>Simultaneously monitors left and right irises with canthal axis alignment. Automatically engages single-eye fallback if one eye is occluded, maintaining continuous tracking.</p>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="feature-card">
+          <span class="feature-icon" style="color:#8b5cf6;"><i class="bi bi-person-bounding-box"></i></span>
+          <h5>3D Head Pose Compensation</h5>
+          <p>Estimates 3D head yaw and pitch via facial mesh reprojection. Fuses eye and head motion to prevent calibration degradation when the patient shifts slightly in bed.</p>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="feature-card">
+          <span class="feature-icon" style="color:#10b981;"><i class="bi bi-bullseye"></i></span>
+          <h5>Cross-Validated ML Calibration</h5>
+          <p>Evaluates Ridge, SVR, and Affine regression using 4-fold cross-validation on ground-truth target coordinates. Reports genuine validation error rather than inflated training fit.</p>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="feature-card">
+          <span class="feature-icon" style="color:#f59e0b;"><i class="bi bi-sliders"></i></span>
+          <h5>1-Euro Adaptive Signal Filtering</h5>
+          <p>Employs dynamic cutoff low-pass filtering: eliminates tremors and micro-saccade jitters during fixation while offering zero-latency tracking during fast eye movements.</p>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="feature-card">
+          <span class="feature-icon" style="color:#ef4444;"><i class="bi bi-envelope-check-fill"></i></span>
+          <h5>Multi-Provider Notification Alerts</h5>
+          <p>Sends instantaneous caregiver emails via Brevo REST API with fallback to standard SMTP. Includes simulated test mode, delivery timing metrics, and full delivery audit trails.</p>
+        </div>
+      </div>
+
+      <div class="col-xl-4 col-md-6">
+        <div class="feature-card">
+          <span class="feature-icon" style="color:#06b6d4;"><i class="bi bi-database-fill-check"></i></span>
+          <h5>Persistent SQLite Telemetry</h5>
+          <p>Saves all communication events, duration timestamps, and calibration accuracy histories into a local SQLite database with one-click CSV export for clinical documentation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="home-divider">
+
+  <!-- ========================================================
+       SECTION 5 — USAGE TIPS & TROUBLESHOOTING (Full Width)
+  ======================================================== -->
+  <section class="home-section">
+    <div class="mb-4">
+      <div class="section-label">Operator Guidance</div>
+      <h2 class="section-title">Important Usage Instructions &amp; Troubleshooting Tips</h2>
+      <p class="section-desc">
+        Essential recommendations to achieve optimal gaze accuracy and resolve common operational questions.
+      </p>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-lg-6">
+        <div class="problem-card" style="border-color:#334155;">
+          <h5 class="text-white mb-3"><i class="bi bi-lightbulb-fill text-warning me-2"></i>Environmental & Positioning Best Practices</h5>
+          <ul style="color:#94a3b8; font-size:0.92rem; line-height:1.8; padding-left:1.25rem;">
+            <li><strong>Optimal Distance:</strong> Position the webcam <strong>50–70 cm</strong> directly in front of the patient's face at eye level.</li>
+            <li><strong>Lighting Setup:</strong> Use diffuse, even ambient lighting. Avoid placing the patient directly in front of bright windows or unshaded backlights.</li>
+            <li><strong>Eyeglasses & Reflections:</strong> The subpixel iris detector is compatible with most corrective lenses. If heavy glare occurs, angle the display slightly.</li>
+            <li><strong>Resting Position:</strong> Before starting, have the patient look comfortably at the screen centre and click <strong>"Re-center"</strong>.</li>
+            <li><strong>Calibration Recency:</strong> Re-run calibration if the patient's bed angle or room lighting changes significantly during the day.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="col-lg-6">
+        <div class="problem-card" style="border-color:#334155;">
+          <h5 class="text-white mb-3"><i class="bi bi-tools text-info me-2"></i>Troubleshooting & Problem Resolution</h5>
+          <ul style="color:#94a3b8; font-size:0.92rem; line-height:1.8; padding-left:1.25rem;">
+            <li><strong>"Camera Sensor Blocked / Camera Off":</strong> Click System Controls &rarr; "Turn On Camera". Check USB connection and ensure no other app is using the webcam.</li>
+            <li><strong>"Searching for Face":</strong> Increase room lighting and center the patient's face in the camera preview window (HUD View).</li>
+            <li><strong>Gaze Cursor Jumps or Drifts:</strong> Click "Re-center" (Key 'R'), then run the 5-point calibration again to train a fresh model.</li>
+            <li><strong>Card Dwell Does Not Trigger:</strong> Ensure both eyes are detected (check HUD). The patient must maintain fixation inside the card boundary for 3.0 seconds.</li>
+            <li><strong>Emails Not Delivering:</strong> Open <a href="/caregiver/settings" style="color:#60a5fa;">Settings</a>, verify Brevo API Key or SMTP credentials, and run "Send Test Email".</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="warning-box mt-4">
+      <i class="bi bi-exclamation-triangle-fill me-2"></i>
+      <strong>Medical Disclaimer:</strong> This software is an assistive human-computer interface designed to aid communication. It is not an FDA/CE-certified life-support device and must not replace standard bedside nurse call systems, telemetry alarms, or routine physical caregiver check-ins.
+    </div>
+  </section>
+
+  <hr class="home-divider">
+
+  <!-- ========================================================
+       FULL-WIDTH BOTTOM CTA
+  ======================================================== -->
+  <section style="padding: clamp(3rem, 5vw, 4.5rem) clamp(1.25rem, 4vw, 4rem); text-align: center; background: linear-gradient(180deg, #0d1117 0%, #080a0e 100%);">
+    <div style="max-width: 900px; margin: 0 auto;">
+      <h3 style="font-family:'Outfit',sans-serif; font-weight:700; color:#fff; font-size:clamp(1.6rem, 2.5vw, 2.2rem); margin-bottom:1rem;">
+        Launch the Communication System
+      </h3>
+      <p style="color:#64748b; font-size:1.05rem; margin-bottom:2rem; line-height:1.7;">
+        The system is ready. Open the Patient Interface to start touchless eye-gaze tracking,
+        or visit the Caregiver Dashboard to review live telemetry and calibration accuracy results.
+      </p>
+      <div class="d-flex justify-content-center gap-3 flex-wrap">
+        <a href="/patient" class="btn-hero-primary">
+          <i class="bi bi-display"></i>
+          Launch Patient Interface
+        </a>
+        <a href="/caregiver/dashboard" class="btn-hero-outline">
+          <i class="bi bi-speedometer2"></i>
+          Open Caregiver Dashboard
+        </a>
+        <a href="/caregiver/settings" class="btn-hero-outline">
+          <i class="bi bi-gear"></i>
+          System Settings
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================
+       FOOTER (Full Width)
+  ======================================================== -->
+  <footer class="home-footer">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+      <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-eye-fill text-primary fs-5"></i>
+        <strong style="color:#cbd5e1; font-size:0.95rem;">AI-Vision-Based Communication Assistance for Paralyzed Individuals</strong>
+      </div>
+      <div class="d-flex gap-3 text-secondary small">
+        <a href="/home" style="color:#64748b; text-decoration:none;">Home</a>
+        <span>•</span>
+        <a href="/patient" style="color:#64748b; text-decoration:none;">Patient Interface</a>
+        <span>•</span>
+        <a href="/caregiver/dashboard" style="color:#64748b; text-decoration:none;">Dashboard</a>
+        <span>•</span>
+        <a href="/caregiver/settings" style="color:#64748b; text-decoration:none;">Settings</a>
+        <span>•</span>
+        <a href="/caregiver/history" style="color:#64748b; text-decoration:none;">Request History</a>
+      </div>
+    </div>
+    <div class="text-secondary small mt-2">
+      Logged in as caregiver: <strong style="color:#e2e8f0;">{{ caregiver_name }}</strong>
+      &nbsp;•&nbsp; Room / Patient: <strong style="color:#e2e8f0;">{{ config.patient_name }}</strong>
+      &nbsp;•&nbsp; Camera: <span class="badge text-bg-secondary bg-opacity-25 text-danger border border-danger border-opacity-25">OFF by default</span>
+    </div>
+  </footer>
+
+</div>
+{% endblock %}

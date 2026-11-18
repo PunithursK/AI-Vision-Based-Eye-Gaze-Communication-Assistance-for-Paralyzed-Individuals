@@ -67,9 +67,10 @@ def main():
     host = os.environ.get("HOST", "127.0.0.1")
     port = int(os.environ.get("PORT", 5000))
     url = f"http://{host}:{port}"
+    home_url = f"{url}/home"
 
-    # Launch browser opener in background
-    threading.Thread(target=open_browser, args=(url,), daemon=True).start()
+    # Launch browser opener in background — opens the Home Page directly
+    threading.Thread(target=open_browser, args=(home_url,), daemon=True).start()
 
     # Import and run Flask app
     from app import app, shutdown_application, setup_graceful_shutdown
@@ -81,8 +82,8 @@ def main():
     print("")
     print("[OK] FaceLandmarker model loaded")
     print("[OK] AI Vision Engine initialized")
-    print("[OK] Camera connected")
-    print("[OK] Gaze tracking initialized")
+    print("[INFO] Camera is OFF by default (Turn ON via interface)")
+    print("[OK] Touchless keyboard controls active (Keys 1-4)")
     print("[OK] Database connected")
     print("[OK] Server started successfully")
     print("")

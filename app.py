@@ -321,7 +321,8 @@ try:
     chosen_cam = int(cfg_cam) if cfg_cam is not None else 0
 
     vision_engine.camera_index = chosen_cam
-    vision_engine.start_camera(chosen_cam)
+    # Camera must remain OFF by default at startup; user must manually turn it on
+    vision_engine.stop_camera()
 
     def handle_camera_fallback(fallback_index):
         try:
@@ -401,8 +402,33 @@ def favicon():
     return resp
 
 
+@app.route("/home")
+def home_page():
+    """
+    Render the new project Home Page.
+    Displayed first when application launches via /home.
+    """
+    config = database.get_config()
+    caregiver_name = config.get("caregiver_name", "Primary Caregiver")
+    resp = make_response(render_template(
+        "home.html",
+        config=config,
+        caregiver_name=caregiver_name
+    ))
+    resp.set_cookie("csrf_token", CSRF_TOKEN, httponly=False, samesite="Lax")
+    return resp
+
+
 @app.route("/")
 def index():
+    """
+    Root URL: redirect to the Home Page so the application starts there.
+    """
+    return redirect(url_for("home_page"))
+
+
+@app.route("/patient")
+def patient_interface():
     """
     Render the modern dark theme eye-gaze communication interface.
     F3: Excludes plaintext smtp_pass (database.get_config omits secrets by default).
@@ -429,6 +455,7 @@ def caregiver_dashboard():
     telemetry = getattr(vision_engine, "telemetry", {})
     recent_logs = database.get_requests_log(limit=6)
     calib = vision_engine.calibration
+    latest_calib_db = database.get_latest_calibration_result()
     return render_template(
         "caregiver/dashboard.html",
         caregiver_name=config.get("caregiver_name", "Primary Caregiver"),
@@ -436,7 +463,8 @@ def caregiver_dashboard():
         blocks=BLOCKS_CONFIG,
         telemetry=telemetry,
         recent_logs=recent_logs,
-        calib=calib
+        calib=calib,
+        latest_calib_db=latest_calib_db
     )
 
 
@@ -982,6 +1010,7 @@ def calibration_notify():
 def calibration_finish():
     """
     C6: Compute calibration transform with real client screen dimensions.
+    Saves the calibration accuracy results to the database after completion.
     """
     data = request.get_json(silent=True) or {}
     try:
@@ -990,6 +1019,27 @@ def calibration_finish():
     except (ValueError, TypeError):
         sw, sh = 1920, 1080
     result = vision_engine.calibration.finish_calibration(frame_w=sw, frame_h=sh)
+
+    # Persist calibration result (success or failure) to database
+    try:
+        calib = vision_engine.calibration
+        db_record = {
+            "status": "Completed" if result.get("calibrated") else "Failed",
+            "model_name": result.get("model_type") or getattr(calib, "selected_model_name", "None"),
+            "num_points": 5,
+            "valid_samples": result.get("val_sample_count") or getattr(calib, "val_sample_count", 0),
+            "calibration_error_px": result.get("val_mae_px"),
+            "mean_gaze_error_px": result.get("val_mean_euclidean_px") or result.get("val_mae_px"),
+            "val_rmse_px": result.get("val_rmse_px"),
+            "validation_accuracy": result.get("accuracy"),
+            "is_calibrated": bool(result.get("calibrated")),
+            "quality": result.get("quality", "None"),
+            "details": result.get("message", "")
+        }
+        database.save_calibration_result(db_record)
+    except Exception as db_err:
+        print(f"[App Warning] Could not save calibration result to database: {db_err}")
+
     return jsonify(result)
 
 
@@ -1023,6 +1073,55 @@ def calibration_status():
         "status_message": calib.status_message,
         "boxes": calib.target_boxes
     })
+
+
+@app.route("/api/calibration/latest", methods=["GET"])
+def calibration_latest():
+    """
+    Return the latest calibration result stored in the database.
+    Also merges live calibration engine state if more recent.
+    Used by the dashboard to display AI Vision & Calibration Results.
+    """
+    db_result = database.get_latest_calibration_result()
+    calib = vision_engine.calibration
+
+    # Build live state from calibration engine
+    live = {
+        "source": "live",
+        "is_calibrated": calib.is_calibrated,
+        "status": "Calibrated" if calib.is_calibrated else ("Calibrating..." if calib.is_calibrating else "Not Calibrated"),
+        "model_name": getattr(calib, "selected_model_name", "None"),
+        "num_points": 5,
+        "valid_samples": getattr(calib, "val_sample_count", 0),
+        "calibration_error_px": getattr(calib, "val_mae_px", None),
+        "mean_gaze_error_px": getattr(calib, "val_mean_euclidean_px", None),
+        "val_rmse_px": getattr(calib, "val_rmse_px", None),
+        "validation_accuracy": getattr(calib, "accuracy", None),
+        "quality": getattr(calib, "quality", "None"),
+        "accuracy_label": getattr(calib, "accuracy_label", ""),
+        "status_message": getattr(calib, "status_message", ""),
+        "timestamp": None,
+        "id": None
+    }
+
+    if db_result:
+        # Merge: use DB record for timestamp/id, but prefer live metrics if calibrated
+        if calib.is_calibrated:
+            live["timestamp"] = db_result.get("timestamp")
+            live["id"] = db_result.get("id")
+            return jsonify({"success": True, "result": live, "has_result": True})
+        else:
+            # Use stored DB result
+            db_result["source"] = "database"
+            db_result["accuracy_label"] = ""
+            db_result["status_message"] = ""
+            db_result["is_calibrated"] = bool(db_result.get("is_calibrated"))
+            return jsonify({"success": True, "result": db_result, "has_result": True})
+
+    if calib.is_calibrated:
+        return jsonify({"success": True, "result": live, "has_result": True})
+
+    return jsonify({"success": True, "result": None, "has_result": False})
 
 
 @app.route("/api/config", methods=["GET", "POST"])

@@ -137,6 +137,25 @@ def init_db():
     );
     """)
 
+    # Table for calibration results and history
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS calibration_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+        status TEXT NOT NULL,
+        model_name TEXT,
+        num_points INTEGER DEFAULT 5,
+        valid_samples INTEGER DEFAULT 0,
+        calibration_error_px REAL,
+        mean_gaze_error_px REAL,
+        val_rmse_px REAL,
+        validation_accuracy REAL,
+        is_calibrated INTEGER DEFAULT 0,
+        quality TEXT,
+        details TEXT
+    );
+    """)
+
     # Insert default config if not present
     cursor.execute("SELECT COUNT(*) FROM caregiver_config WHERE id = 1")
     if cursor.fetchone()[0] == 0:
@@ -451,6 +470,90 @@ def export_logs_csv():
             r["status"], r["delivery_duration_ms"], r["notes"]
         ])
     return output.getvalue()
+
+
+def save_calibration_result(data: dict):
+    """
+    Save calibration accuracy and error results to database.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    INSERT INTO calibration_history (
+        status, model_name, num_points, valid_samples,
+        calibration_error_px, mean_gaze_error_px, val_rmse_px,
+        validation_accuracy, is_calibrated, quality, details
+    ) VALUES (
+        :status, :model_name, :num_points, :valid_samples,
+        :calibration_error_px, :mean_gaze_error_px, :val_rmse_px,
+        :validation_accuracy, :is_calibrated, :quality, :details
+    )
+    """, {
+        "status": data.get("status", "Completed"),
+        "model_name": data.get("model_name", "None"),
+        "num_points": int(data.get("num_points", 5)),
+        "valid_samples": int(data.get("valid_samples", 0)),
+        "calibration_error_px": data.get("calibration_error_px"),
+        "mean_gaze_error_px": data.get("mean_gaze_error_px"),
+        "val_rmse_px": data.get("val_rmse_px"),
+        "validation_accuracy": data.get("validation_accuracy"),
+        "is_calibrated": 1 if data.get("is_calibrated") else 0,
+        "quality": data.get("quality", "None"),
+        "details": data.get("details", "")
+    })
+    rec_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return rec_id
+
+
+def get_latest_calibration_result():
+    """
+    Retrieve the most recent calibration result from the database.
+    If none exists in the DB but a valid calibration_profile.json exists on disk,
+    migrates it into the DB for seamless continuity.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+    SELECT id, timestamp, status, model_name, num_points, valid_samples,
+           calibration_error_px, mean_gaze_error_px, val_rmse_px,
+           validation_accuracy, is_calibrated, quality, details
+    FROM calibration_history
+    ORDER BY id DESC LIMIT 1
+    """)
+    row = cursor.fetchone()
+    conn.close()
+
+    if row:
+        return dict(row)
+
+    # Check for existing profile on disk
+    profile_path = os.environ.get("CALIBRATION_PROFILE_PATH", "calibration_profile.json")
+    if os.path.exists(profile_path):
+        try:
+            with open(profile_path, "r", encoding="utf-8") as f:
+                prof = json.load(f)
+            if prof.get("source") == "user_calibration":
+                rec = {
+                    "status": "Completed" if prof.get("has_trained_model") else "Calibrated",
+                    "model_name": prof.get("model_name", "Affine Standard"),
+                    "num_points": 5,
+                    "valid_samples": prof.get("samples_count", 0),
+                    "calibration_error_px": prof.get("val_mae_px"),
+                    "mean_gaze_error_px": prof.get("val_mae_px"),
+                    "val_rmse_px": prof.get("val_rmse_px"),
+                    "validation_accuracy": prof.get("accuracy") or prof.get("hit_rate"),
+                    "is_calibrated": 1 if prof.get("has_trained_model") else 0,
+                    "quality": prof.get("quality", "Restored Profile"),
+                    "details": json.dumps(prof)
+                }
+                save_calibration_result(rec)
+                return get_latest_calibration_result()
+        except Exception:
+            pass
+
+    return None
 
 
 # Initialize upon module import

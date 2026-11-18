@@ -23,8 +23,8 @@ class GazeAssistant {
         this.hasReceivedValidGaze = false;
         this.hasEverTrackedFace = false;
 
-        // Camera power state
-        this.cameraRunning = true;
+        // Camera power state (OFF by default per safety requirement)
+        this.cameraRunning = false;
 
         // Audio and Speech
         this.audioCtx = null;
@@ -136,6 +136,7 @@ class GazeAssistant {
         // Initialize components
         this.initAudio();
         this.bindEvents();
+        this.updateCameraUI();
         this.fetchInitialTelemetry();
         // D1: Delay fetchCameras until calibration finishes/skips or after startup settle
         setTimeout(() => {
