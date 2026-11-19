@@ -975,7 +975,7 @@ class GazeAssistant {
         if (!box) return;
 
         const now = Date.now();
-        const TARGET_SAMPLES = 12;
+        const TARGET_SAMPLES = 16;
         const dwellDuration = this.calibrationDwellDuration || 1500;
         const isFresh = (now - this.lastTelemetryReceiveTime) <= 400;
 
@@ -1162,7 +1162,22 @@ class GazeAssistant {
         }
 
         // Complete point ONLY when continuous dwell duration is reached AND at least 12 server-accepted samples
-        if (dwellElapsed >= dwellDuration || this.acceptedSamplesInBox >= TARGET_SAMPLES) {
+        if (
+            dwellElapsed >= dwellDuration &&
+            this.acceptedSamplesInBox < TARGET_SAMPLES
+        ) {
+            if (this.calibBoxSublabel) {
+                this.calibBoxSublabel.textContent =
+                    `Collecting valid samples (${this.acceptedSamplesInBox}/${TARGET_SAMPLES}). Keep looking at the target.`;
+            }
+
+            if (this.calibCountdownText) {
+                this.calibCountdownText.textContent =
+                    `Waiting for valid samples: ${this.acceptedSamplesInBox}/${TARGET_SAMPLES}`;
+            }
+        }
+
+        if (this.acceptedSamplesInBox >= TARGET_SAMPLES) {
             this.calibDwellActive = false;
             this.calibDwellStartTime = null;
             this.calibrationBox.classList.remove("active-target", "gaze-inside", "gaze-hover");

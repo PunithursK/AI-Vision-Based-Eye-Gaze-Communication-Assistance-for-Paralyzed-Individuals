@@ -1252,7 +1252,13 @@ class BothEyeCalibrationManager:
                 "val_mae_px": self.val_mae_px,
                 "val_rmse_px": self.val_rmse_px,
                 "hit_rate": self.hit_rate,
-                "message": self.status_message
+                "message": self.status_message,
+                "model_type": self.selected_model_name,
+                "val_mean_euclidean_px": self.val_mean_euclidean_px,
+                "val_median_euclidean_px": self.val_median_euclidean_px,
+                "val_mae_x_px": self.val_mae_x_px,
+                "val_mae_y_px": self.val_mae_y_px,
+                "val_sample_count": self.val_sample_count,
             }
 
         if self.val_mean_euclidean_px <= 65.0 and self.val_hit_rate_pct >= 85.0:
