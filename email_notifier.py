@@ -333,7 +333,7 @@ def send_email_sync(request_id, request_data, config=None):
             BREVO_API_URL,
             json=payload,
             headers=headers,
-            timeout=8.0
+            timeout=12.0
         )
         post_ms = int((time.time() - t_post) * 1000)
         duration_ms = int((time.time() - start_time) * 1000)

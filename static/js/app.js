@@ -453,12 +453,18 @@ class GazeAssistant {
         });
 
         // Toggle Camera PIP HUD
-        document.getElementById("btn-toggle-cam").addEventListener("click", () => {
-            this.pipWindow.classList.toggle("hidden");
-        });
-        document.getElementById("btn-close-pip").addEventListener("click", () => {
-            this.pipWindow.classList.add("hidden");
-        });
+        const btnToggleCam = document.getElementById("btn-toggle-cam");
+        if (btnToggleCam) {
+            btnToggleCam.addEventListener("click", () => {
+                if (this.pipWindow) this.pipWindow.classList.toggle("hidden");
+            });
+        }
+        const btnClosePip = document.getElementById("btn-close-pip");
+        if (btnClosePip) {
+            btnClosePip.addEventListener("click", () => {
+                if (this.pipWindow) this.pipWindow.classList.add("hidden");
+            });
+        }
 
         // Draggable PiP Window
         const pipHeader = this.pipWindow ? (this.pipWindow.querySelector(".cam-pip-header") || this.pipWindow.querySelector(".pip-header")) : null;
@@ -508,18 +514,29 @@ class GazeAssistant {
         }
 
         // Manual Caregiver Override Unlock Button
-        document.getElementById("btn-manual-unlock").addEventListener("click", () => {
-            this.forceUnlock();
-        });
+        const btnManualUnlock = document.getElementById("btn-manual-unlock");
+        if (btnManualUnlock) {
+            btnManualUnlock.addEventListener("click", () => this.forceUnlock());
+        }
 
         // Modals: Logs and Settings
-        document.getElementById("btn-open-logs").addEventListener("click", () => this.openLogs());
-        document.getElementById("btn-close-logs").addEventListener("click", () => this.logsModal.classList.add("hidden"));
-        document.getElementById("btn-clear-logs").addEventListener("click", () => this.clearLogs());
+        const btnOpenLogs = document.getElementById("btn-open-logs");
+        if (btnOpenLogs) btnOpenLogs.addEventListener("click", () => this.openLogs());
 
-        document.getElementById("btn-open-settings").addEventListener("click", () => this.openSettings());
-        document.getElementById("btn-close-settings").addEventListener("click", () => this.settingsModal.classList.add("hidden"));
-        document.getElementById("btn-cancel-settings").addEventListener("click", () => this.settingsModal.classList.add("hidden"));
+        const btnCloseLogs = document.getElementById("btn-close-logs");
+        if (btnCloseLogs) btnCloseLogs.addEventListener("click", () => this.logsModal && this.logsModal.classList.add("hidden"));
+
+        const btnClearLogs = document.getElementById("btn-clear-logs");
+        if (btnClearLogs) btnClearLogs.addEventListener("click", () => this.clearLogs());
+
+        const btnOpenSettings = document.getElementById("btn-open-settings");
+        if (btnOpenSettings) btnOpenSettings.addEventListener("click", () => this.openSettings());
+
+        const btnCloseSettings = document.getElementById("btn-close-settings");
+        if (btnCloseSettings) btnCloseSettings.addEventListener("click", () => this.settingsModal && this.settingsModal.classList.add("hidden"));
+
+        const btnCancelSettings = document.getElementById("btn-cancel-settings");
+        if (btnCancelSettings) btnCancelSettings.addEventListener("click", () => this.settingsModal && this.settingsModal.classList.add("hidden"));
 
         // Settings Range Sliders Live Value Labels
         const dwellSlider = document.getElementById("cfg-dwell-time");
@@ -975,7 +992,7 @@ class GazeAssistant {
         if (!box) return;
 
         const now = Date.now();
-        const TARGET_SAMPLES = 16;
+        const TARGET_SAMPLES = 10;
         const dwellDuration = this.calibrationDwellDuration || 1500;
         const isFresh = (now - this.lastTelemetryReceiveTime) <= 400;
 
@@ -1162,22 +1179,15 @@ class GazeAssistant {
         }
 
         // Complete point ONLY when continuous dwell duration is reached AND at least 12 server-accepted samples
-        if (
-            dwellElapsed >= dwellDuration &&
-            this.acceptedSamplesInBox < TARGET_SAMPLES
-        ) {
-            if (this.calibBoxSublabel) {
-                this.calibBoxSublabel.textContent =
-                    `Collecting valid samples (${this.acceptedSamplesInBox}/${TARGET_SAMPLES}). Keep looking at the target.`;
-            }
-
-            if (this.calibCountdownText) {
-                this.calibCountdownText.textContent =
-                    `Waiting for valid samples: ${this.acceptedSamplesInBox}/${TARGET_SAMPLES}`;
-            }
+        // Feedback when dwell completed but still waiting for server-accepted valid samples
+        if (dwellElapsed >= dwellDuration && this.acceptedSamplesInBox < TARGET_SAMPLES) {
+            if (this.calibBoxBadge) this.calibBoxBadge.textContent = "COLLECTING VALID SAMPLES";
+            if (this.calibBoxSublabel) this.calibBoxSublabel.textContent = `Collecting valid samples (${this.acceptedSamplesInBox}/${TARGET_SAMPLES}) — keep looking at the target`;
+            if (this.calibCountdownText) this.calibCountdownText.textContent = `Waiting for samples: ${this.acceptedSamplesInBox}/${TARGET_SAMPLES}`;
         }
 
-        if (this.acceptedSamplesInBox >= TARGET_SAMPLES) {
+        // Complete point ONLY when continuous dwell duration is reached AND at least 10 server-accepted samples
+        if (dwellElapsed >= dwellDuration && this.acceptedSamplesInBox >= TARGET_SAMPLES) {
             this.calibDwellActive = false;
             this.calibDwellStartTime = null;
             this.calibrationBox.classList.remove("active-target", "gaze-inside", "gaze-hover");
@@ -1232,12 +1242,33 @@ class GazeAssistant {
                 fetch("/api/calibration/notify", { method: "POST", headers: this.getHeaders() }).catch(() => { });
             } catch (e) { }
 
+            // Broadcast calibration completion immediately to any open dashboard tabs/windows
+            try {
+                const bc = new BroadcastChannel("eye_gaze_calibration");
+                bc.postMessage({ type: "CALIBRATION_FINISHED", result: result });
+                bc.close();
+            } catch (e) { }
+            try {
+                localStorage.setItem("calib_update_ts", Date.now().toString());
+            } catch (e) { }
+
             const accText = (result.accuracy !== undefined && result.accuracy !== null) ? `${result.accuracy}%` : "Not Measured";
             const errDetail = result.val_mae_px ? ` | Val MAE: ${result.val_mae_px}px` : "";
             this.playChimeDelivered();
             this.showToast(`Both-Eye Calibration: ${result.quality || "Processed"} (Hit Rate: ${accText}${errDetail})`);
         } else {
             this.isCalibrated = false;
+
+            // Broadcast calibration failure immediately to any open dashboard tabs/windows
+            try {
+                const bc = new BroadcastChannel("eye_gaze_calibration");
+                bc.postMessage({ type: "CALIBRATION_FAILED", result: result });
+                bc.close();
+            } catch (e) { }
+            try {
+                localStorage.setItem("calib_update_ts", Date.now().toString());
+            } catch (e) { }
+
             this.showToast("Calibration quality too low. Tips: improve lighting, reduce head movement, clean the camera lens, then click Re-Calibrate to try again.");
         }
 

@@ -535,6 +535,12 @@ body.lockout-active .request-card:hover .card-key-badge .key-label {
     border: 1px solid var(--border-color);
     border-radius: var(--card-radius);
     color: var(--text-primary);
+    pointer-events: auto !important;
+}
+
+.patient-header .card-body,
+.patient-footer .card-body {
+    pointer-events: auto !important;
 }
 
 .system-controls-dropdown-menu {
@@ -625,14 +631,14 @@ body.lockout-active .request-card:hover .card-key-badge .key-label {
 }
 
 .card-key-badge .key-label {
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 700;
     color: var(--text-muted);
     letter-spacing: 0.5px;
 }
 
 .card-key-badge .key-digit {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 800;
     color: #ffffff;
     line-height: 1;
@@ -651,17 +657,17 @@ body.lockout-active .request-card:hover .card-key-badge .key-label {
 }
 
 .category-tag {
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     color: var(--text-muted);
 }
 
 .priority-badge {
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
-    padding: 2px 7px;
+    padding: 3px 8px;
     border-radius: 9999px;
     letter-spacing: 0.3px;
 }
@@ -684,48 +690,60 @@ body.lockout-active .request-card:hover .card-key-badge .key-label {
     color: #93c5fd;
 }
 
-/* Card Body (Icon & Titles) */
-.card-body {
+/* Card Body (Centered Icon, Title & Description - Task 3) */
+.request-card .card-body {
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 10px;
+    padding: 10px 16px;
+    pointer-events: auto;
 }
 
 .icon-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 50px;
-    height: 50px;
-    border-radius: var(--radius-lg);
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
     background: #1c1c1c;
-    border: 1px solid #282828;
+    border: 1.5px solid #2c2c2c;
     color: var(--card-accent);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     transition: transform var(--transition-fast);
 }
 
 .card-icon {
-    font-size: 30px;
+    font-size: 36px;
 }
 
 .request-card.gaze-hover .icon-wrapper {
-    transform: scale(1.05);
+    transform: scale(1.1);
     background: #252525;
+    border-color: var(--card-accent);
 }
 
 .card-title {
     font-family: var(--font-heading);
-    font-size: 21px;
-    font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1.15;
+    font-size: clamp(2.2rem, 3.4vw, 3.2rem);
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.1;
+    margin: 0;
+    letter-spacing: 0.5px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .card-desc {
-    font-size: 12px;
+    font-size: 13px;
     color: var(--text-secondary);
-    line-height: 1.4;
+    line-height: 1.45;
+    max-width: 82%;
+    margin: 0;
 
     display: -webkit-box;
     -webkit-box-orient: vertical;
@@ -738,10 +756,10 @@ body.lockout-active .request-card:hover .card-key-badge .key-label {
 /* Radial SVG Dwell Indicator (Solid, Non-Neon) */
 .dwell-wrapper {
     position: absolute;
-    bottom: 12px;
-    right: 14px;
-    width: 56px;
-    height: 56px;
+    bottom: 14px;
+    right: 16px;
+    width: 60px;
+    height: 60px;
 }
 
 .dwell-svg {

@@ -1008,12 +1008,28 @@ def calibration_notify():
 
 @app.route("/api/calibration/finish", methods=["POST"])
 def calibration_finish():
-            # Count the actual samples collected across all five calibration points
+    """
+    C6: Compute calibration transform with real client screen dimensions.
+    Saves the calibration accuracy results to the database after completion.
+    """
+    data = request.get_json(silent=True) or {}
+    try:
+        sw = int(data.get("screen_w", 1920))
+        sh = int(data.get("screen_h", 1080))
+    except (ValueError, TypeError):
+        sw, sh = 1920, 1080
+
+    # Execute calibration model fitting and evaluation using client resolution
+    result = vision_engine.calibration.finish_calibration(frame_w=sw, frame_h=sh)
+
+    # Persist calibration result (success or failure) to database immediately
+    try:
         calib = vision_engine.calibration
         total_samples = sum(
             len(samples)
             for samples in calib.samples.values()
         )
+        sample_count = result.get("val_sample_count") or total_samples
 
         db_record = {
             "status": "Completed" if result.get("calibrated") else "Failed",
@@ -1022,38 +1038,37 @@ def calibration_finish():
                 or getattr(calib, "selected_model_name", "None")
             ),
             "num_points": 5,
-            "valid_samples": total_samples,
-
+            "valid_samples": sample_count,
             "calibration_error_px": (
                 result.get("val_mae_px")
                 if result.get("val_mae_px") is not None
                 else getattr(calib, "val_mae_px", None)
             ),
-
             "mean_gaze_error_px": (
                 result.get("val_mean_euclidean_px")
                 if result.get("val_mean_euclidean_px") is not None
                 else getattr(calib, "val_mean_euclidean_px", None)
             ),
-
             "val_rmse_px": (
                 result.get("val_rmse_px")
                 if result.get("val_rmse_px") is not None
                 else getattr(calib, "val_rmse_px", None)
             ),
-
             "validation_accuracy": (
                 result.get("accuracy")
                 if result.get("accuracy") is not None
                 else getattr(calib, "accuracy", None)
             ),
-
             "is_calibrated": bool(result.get("calibrated")),
             "quality": result.get("quality") or getattr(calib, "quality", "None"),
             "details": result.get("message", "")
         }
 
         database.save_calibration_result(db_record)
+    except Exception as db_err:
+        print(f"[App Warning] Could not save calibration result to database: {db_err}")
+
+    return jsonify(result)
 
 @app.route("/api/calibration/skip", methods=["POST"])
 def calibration_skip():
@@ -1112,6 +1127,7 @@ def calibration_latest():
         "quality": getattr(calib, "quality", "None"),
         "accuracy_label": getattr(calib, "accuracy_label", ""),
         "status_message": getattr(calib, "status_message", ""),
+        "details": getattr(calib, "status_message", ""),
         "timestamp": None,
         "id": None
     }
