@@ -162,7 +162,7 @@ A safety watchdog monitors the notification process. If dispatch exceeds 20 seco
 Open a terminal and navigate to the project directory:
 
 ```bash
-cd "C:\Users\Punithurs K\Downloads\Eye Gaze AI"
+cd "C:\Users\folderpath"
 ```
 
 Install the required dependencies:
